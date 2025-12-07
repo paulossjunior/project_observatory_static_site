@@ -1,0 +1,195 @@
+---
+interface Props {
+  chartId: string;
+  title?: string;
+  height?: number;
+  chartType: 'line' | 'bar' | 'pie' | 'doughnut' | 'radar' | 'polarArea';
+  chartData: any;
+  chartOptions?: any;
+}
+
+const { 
+  chartId,
+  title,
+  height = 350,
+  chartType,
+  chartData,
+  chartOptions = {}
+} = Astro.props;
+
+const hasData = chartData && (chartData.labels?.length > 0 || chartData.datasets?.length > 0);
+---
+
+<div class="generic-chart-container">
+  {title && <h3 class="chart-title">{title}</h3>}
+  
+  {hasData ? (
+    <div class="chart-wrapper">
+      <canvas 
+        id={chartId}
+        role="img"
+        aria-label={title || 'Chart visualization'}
+      ></canvas>
+    </div>
+  ) : (
+    <div class="no-data-message">
+      <p>No data available for this visualization.</p>
+    </div>
+  )}
+</div>
+
+<style>
+  .generic-chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 1.5rem 0;
+  }
+
+  .chart-title {
+    margin: 0 0 1.25rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .chart-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  .no-data-message {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #9ca3af;
+  }
+
+  .no-data-message p {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 768px) {
+    .generic-chart-container {
+      padding: 1.25rem;
+      margin: 1.25rem 0;
+    }
+
+    .chart-title {
+      font-size: 1rem;
+    }
+  }
+</style>
+
+{hasData && (
+  <script define:vars={{ chartId, chartType, chartData, chartOptions, height }}>
+    // Load Chart.js and datalabels plugin from CDN if not already loaded
+    if (typeof Chart === 'undefined') {
+      const chartScript = document.createElement('script');
+      chartScript.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+      chartScript.onload = function() {
+        loadDataLabelsPlugin();
+      };
+      chartScript.onerror = function() {
+        console.error('Failed to load Chart.js for', chartId);
+        const canvas = document.getElementById(chartId);
+        if (canvas && canvas.parentElement) {
+          canvas.parentElement.innerHTML = '<p style="text-align: center; color: #ef4444;">Unable to load chart.</p>';
+        }
+      };
+      document.head.appendChild(chartScript);
+    } else {
+      loadDataLabelsPlugin();
+    }
+    
+    function loadDataLabelsPlugin() {
+      if (typeof ChartDataLabels === 'undefined') {
+        const pluginScript = document.createElement('script');
+        pluginScript.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2';
+        pluginScript.onload = function() {
+          initChart();
+        };
+        pluginScript.onerror = function() {
+          console.warn('Failed to load datalabels plugin, chart will render without labels');
+          initChart();
+        };
+        document.head.appendChild(pluginScript);
+      } else {
+        initChart();
+      }
+    }
+    
+    function initChart() {
+      const ctx = document.getElementById(chartId);
+      
+      if (!ctx || typeof Chart === 'undefined') {
+        return;
+      }
+      
+      try {
+        // Default options
+        const defaultOptions = {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 2,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                padding: 12,
+                font: {
+                  size: 11,
+                  family: "'Inter', 'system-ui', sans-serif"
+                },
+                usePointStyle: true
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 13,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 12
+              }
+            },
+            datalabels: {
+              display: false // Default to false, enable per chart
+            }
+          }
+        };
+
+        // Merge with custom options
+        const finalOptions = {
+          ...defaultOptions,
+          ...chartOptions,
+          plugins: {
+            ...defaultOptions.plugins,
+            ...(chartOptions.plugins || {})
+          }
+        };
+        
+        // Register datalabels plugin if available
+        const plugins = typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : [];
+        
+        new Chart(ctx, {
+          type: chartType,
+          data: chartData,
+          options: finalOptions,
+          plugins: plugins
+        });
+      } catch (error) {
+        console.error('Error initializing chart:', chartId, error);
+      }
+    }
+  </script>
+)}

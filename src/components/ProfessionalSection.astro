@@ -1,0 +1,128 @@
+---
+import type { ProfessionalPosition } from '../utils/personData';
+import { formatPeriod } from '../utils/personData';
+
+interface Props {
+  positions: ProfessionalPosition[];
+}
+
+const { positions } = Astro.props;
+
+// Filter out positions without meaningful data and sort by year (most recent first)
+const validPositions = positions.filter(pos => 
+  pos.instituicao_nome || pos.instituicao
+);
+
+const sortedPositions = [...validPositions].sort((a, b) => {
+  const yearA = parseInt(a.ano_inicio || '0');
+  const yearB = parseInt(b.ano_inicio || '0');
+  return yearB - yearA;
+});
+---
+
+{sortedPositions.length > 0 && (
+  <section class="professional-section">
+    <h2>Professional Experience</h2>
+    <div class="positions-list">
+      {sortedPositions.map((position) => (
+        <article class="position">
+          <h3>{position.instituicao_nome || position.instituicao}</h3>
+          
+          {position.periodo && (
+            <p class="period">{position.periodo}</p>
+          )}
+          
+          <div class="details">
+            {position.vinculo && (
+              <p class="detail"><strong>Type:</strong> {position.vinculo}</p>
+            )}
+            {position.enquadramento && (
+              <p class="detail"><strong>Role:</strong> {position.enquadramento}</p>
+            )}
+            {position.regime && (
+              <p class="detail"><strong>Regime:</strong> {position.regime}</p>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .professional-section {
+    margin: 2rem 0;
+  }
+
+  .professional-section h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0066cc;
+  }
+
+  .positions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .position {
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-left: 4px solid #28a745;
+    border-radius: 4px;
+  }
+
+  .position h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .position .period {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+  }
+
+  .details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .detail {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #4a4a4a;
+  }
+
+  .detail strong {
+    color: #333;
+    font-weight: 600;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .professional-section h2 {
+      font-size: 1.3rem;
+    }
+
+    .position {
+      padding: 1rem;
+    }
+
+    .position h3 {
+      font-size: 1rem;
+    }
+
+    .detail {
+      font-size: 0.9rem;
+    }
+  }
+</style>

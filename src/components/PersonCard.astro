@@ -1,0 +1,81 @@
+---
+interface Props {
+  name: string;
+  summary: string;
+  id: string;
+}
+
+const { name, summary, id } = Astro.props;
+
+// Truncate summary if too long
+const maxLength = 200;
+const truncatedSummary = summary.length > maxLength 
+  ? summary.substring(0, maxLength) + '...' 
+  : summary;
+---
+
+<a href={`/person/${id}`} class="person-card">
+  <h2>{name}</h2>
+  <p class="summary">{truncatedSummary}</p>
+  <span class="view-profile">View Profile →</span>
+</a>
+
+<style>
+  .person-card {
+    display: block;
+    padding: 1.5rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .person-card:hover {
+    border-color: #0066cc;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .person-card h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .person-card .summary {
+    margin: 0 0 1rem 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #4a4a4a;
+  }
+
+  .person-card .view-profile {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #0066cc;
+  }
+
+  .person-card:hover .view-profile {
+    text-decoration: underline;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .person-card {
+      padding: 1.25rem;
+    }
+
+    .person-card h2 {
+      font-size: 1.1rem;
+    }
+
+    .person-card .summary {
+      font-size: 0.9rem;
+    }
+  }
+</style>

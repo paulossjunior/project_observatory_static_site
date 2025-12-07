@@ -1,0 +1,341 @@
+---
+import type { PersonData, Orientacao } from '../utils/personData';
+
+interface Props {
+  personData: PersonData;
+}
+
+const { personData } = Astro.props;
+
+// Get ongoing supervisions
+const ongoingSupervisions: (Orientacao & { type: string })[] = [];
+if (personData.orientacoes?.em_andamento) {
+  const types = {
+    doutorado: 'PhD',
+    mestrado: "Master's",
+    especializacao: 'Specialization',
+    tcc: 'Undergraduate',
+    iniciacao_cientifica: 'Undergraduate Research',
+    pos_doutorado: 'Post-Doctoral',
+    outros: 'Other'
+  };
+  
+  Object.entries(types).forEach(([key, label]) => {
+    const items = personData.orientacoes?.em_andamento?.[key as keyof typeof personData.orientacoes.em_andamento];
+    if (items && Array.isArray(items)) {
+      items.forEach(item => {
+        ongoingSupervisions.push({ ...item, type: label });
+      });
+    }
+  });
+}
+
+// Get completed supervisions (last 15)
+const completedSupervisions: (Orientacao & { type: string })[] = [];
+if (personData.orientacoes?.concluidas) {
+  const types = {
+    doutorado: 'PhD',
+    mestrado: "Master's",
+    especializacao: 'Specialization',
+    tcc: 'Undergraduate',
+    iniciacao_cientifica: 'Undergraduate Research',
+    pos_doutorado: 'Post-Doctoral',
+    outros: 'Other'
+  };
+  
+  Object.entries(types).forEach(([key, label]) => {
+    const items = personData.orientacoes?.concluidas?.[key as keyof typeof personData.orientacoes.concluidas];
+    if (items && Array.isArray(items)) {
+      items.forEach(item => {
+        completedSupervisions.push({ ...item, type: label });
+      });
+    }
+  });
+}
+
+// Sort by year
+ongoingSupervisions.sort((a, b) => b.ano_inicio - a.ano_inicio);
+completedSupervisions.sort((a, b) => b.ano_conclusao - a.ano_conclusao);
+const recentCompleted = completedSupervisions.slice(0, 15);
+---
+
+<div class="supervisions-tables">
+  <!-- Ongoing Supervisions -->
+  {ongoingSupervisions.length > 0 && (
+    <div class="table-section">
+      <h3 class="table-title">
+        <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        Ongoing Supervisions ({ongoingSupervisions.length})
+      </h3>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Title</th>
+              <th>Start Year</th>
+              <th>Institution</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ongoingSupervisions.map(supervision => (
+              <tr>
+                <td class="student-name">{supervision.orientando}</td>
+                <td>
+                  <span class={`badge badge-${supervision.type.toLowerCase().replace(/[^a-z]/g, '')}`}>
+                    {supervision.type}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge status-ongoing">
+                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Ongoing
+                  </span>
+                </td>
+                <td class="thesis-title">{supervision.titulo}</td>
+                <td>{supervision.ano_inicio}</td>
+                <td class="institution">{supervision.instituicao}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+  <!-- Completed Supervisions -->
+  {recentCompleted.length > 0 && (
+    <div class="table-section">
+      <h3 class="table-title">
+        <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+        Recently Completed Supervisions (Last 15)
+      </h3>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Title</th>
+              <th>Year</th>
+              <th>Institution</th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentCompleted.map(supervision => (
+              <tr>
+                <td class="student-name">{supervision.orientando}</td>
+                <td>
+                  <span class={`badge badge-${supervision.type.toLowerCase().replace(/[^a-z]/g, '')}`}>
+                    {supervision.type}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge status-done">
+                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Done
+                  </span>
+                </td>
+                <td class="thesis-title">{supervision.titulo}</td>
+                <td>{supervision.ano_conclusao}</td>
+                <td class="institution">{supervision.instituicao}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .supervisions-tables {
+    margin: 2rem 0;
+  }
+
+  .table-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+  }
+
+  .table-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .title-icon {
+    width: 20px;
+    height: 20px;
+    color: #667eea;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .data-table thead {
+    background: #f9fafb;
+  }
+
+  .data-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .data-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #1f2937;
+  }
+
+  .data-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .student-name {
+    font-weight: 500;
+  }
+
+  .thesis-title {
+    max-width: 350px;
+    font-style: italic;
+    color: #4b5563;
+  }
+
+  .institution {
+    color: #6b7280;
+    font-size: 0.8125rem;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+  }
+
+  .badge-phd {
+    background: #fce7f3;
+    color: #9f1239;
+  }
+
+  .badge-masters {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge-specialization {
+    background: #e0e7ff;
+    color: #3730a3;
+  }
+
+  .badge-undergraduate {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .badge-undergraduateresearch {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .badge-postdoctoral {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .badge-other {
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+  }
+
+  .status-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .status-ongoing {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .status-done {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  @media (max-width: 768px) {
+    .table-section {
+      padding: 1rem;
+    }
+
+    .data-table {
+      font-size: 0.8125rem;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.625rem 0.75rem;
+    }
+
+    .thesis-title {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .institution {
+      display: none;
+    }
+  }
+</style>

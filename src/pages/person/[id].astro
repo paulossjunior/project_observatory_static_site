@@ -1,0 +1,146 @@
+---
+import PersonHeader from '../../components/PersonHeader.astro';
+import ResearcherAnalyticsDashboard from '../../components/ResearcherAnalyticsDashboard.astro';
+import PersonProjectsChart from '../../components/PersonProjectsChart.astro';
+import AcademicSection from '../../components/AcademicSection.astro';
+import AreasAtuacaoSection from '../../components/AreasAtuacaoSection.astro';
+import LinhasPesquisaSection from '../../components/LinhasPesquisaSection.astro';
+import ProjectsSection from '../../components/ProjectsSection.astro';
+import ProducaoBibliograficaSection from '../../components/ProducaoBibliograficaSection.astro';
+import OrientacoesSection from '../../components/OrientacoesSection.astro';
+import BancasSection from '../../components/BancasSection.astro';
+import { getAllPeople, getPersonById } from '../../utils/personData';
+
+export async function getStaticPaths() {
+  const people = await getAllPeople();
+  
+  return people.map((person) => ({
+    params: { id: person.id },
+    props: { person: person.data }
+  }));
+}
+
+const { id } = Astro.params;
+const { person } = Astro.props;
+
+if (!person) {
+  return Astro.redirect('/404');
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{person.informacoes_pessoais.nome_completo} - Academic Observatory</title>
+    <meta name="description" content={person.informacoes_pessoais.texto_resumo} />
+  </head>
+  <body>
+    <nav class="breadcrumb">
+      <a href="/">← Back to All People</a>
+    </nav>
+
+    <main>
+      <PersonHeader info={person.informacoes_pessoais} />
+      
+      <ResearcherAnalyticsDashboard personData={person} />
+      
+      <AcademicSection degrees={person.formacao_academica || []} />
+      
+      <AreasAtuacaoSection areas={person.areas_de_atuacao || []} />
+      
+      <LinhasPesquisaSection linhas={person.linhas_de_pesquisa || []} />
+      
+      <ProjectsSection 
+        projects={person.projetos_pesquisa || []} 
+        title="Research Projects" 
+      />
+      
+      <ProjectsSection 
+        projects={person.projetos_extensao || []} 
+        title="Extension Projects" 
+      />
+      
+      <ProjectsSection 
+        projects={person.projetos_desenvolvimento || []} 
+        title="Development Projects" 
+      />
+      
+      <ProducaoBibliograficaSection producao={person.producao_bibliografica || {}} />
+      
+      <OrientacoesSection orientacoes={person.orientacoes || {}} />
+      
+      <BancasSection bancas={person.bancas || {}} />
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    --color-primary: #0066cc;
+    --color-text: #1a1a1a;
+    --color-text-light: #4a4a4a;
+    --color-border: #e0e0e0;
+    --color-bg: #ffffff;
+    --color-bg-alt: #f8f9fa;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .breadcrumb {
+    background: var(--color-bg-alt);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .breadcrumb a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: #0052a3;
+    text-decoration: underline;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .breadcrumb {
+      padding: 0.75rem 1rem;
+    }
+
+    main {
+      padding: 1.5rem 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    main {
+      padding: 1rem 0.75rem;
+    }
+  }
+</style>

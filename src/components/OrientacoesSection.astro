@@ -1,0 +1,175 @@
+---
+import type { OrientacoesData, Orientacao } from '../utils/personData';
+import { formatPeriod } from '../utils/personData';
+
+interface Props {
+  orientacoes: OrientacoesData;
+}
+
+const { orientacoes } = Astro.props;
+
+// Helper to get all orientations from a category
+function getOrientacoes(categoria: any): Orientacao[] {
+  if (!categoria) return [];
+  const all: Orientacao[] = [];
+  Object.values(categoria).forEach((list: any) => {
+    if (Array.isArray(list)) {
+      all.push(...list);
+    }
+  });
+  return all;
+}
+
+const emAndamento = getOrientacoes(orientacoes?.em_andamento);
+const concluidas = getOrientacoes(orientacoes?.concluidas);
+
+// Sort by year (most recent first)
+const emAndamentoOrdenadas = [...emAndamento].sort((a, b) => 
+  (b.ano_inicio || 0) - (a.ano_inicio || 0)
+);
+const concluidasOrdenadas = [...concluidas].sort((a, b) => 
+  (b.ano_conclusao || 0) - (a.ano_conclusao || 0)
+);
+
+const hasOrientacoes = emAndamento.length > 0 || concluidas.length > 0;
+---
+
+{hasOrientacoes && (
+  <section class="orientacoes-section">
+    <h2>Orientações</h2>
+
+    {emAndamento.length > 0 && (
+      <div class="orientacoes-subsection">
+        <h3>Em Andamento ({emAndamento.length})</h3>
+        <div class="orientacoes-list">
+          {emAndamentoOrdenadas.slice(0, 10).map((orientacao) => (
+            <article class="orientacao">
+              <h4>{orientacao.titulo}</h4>
+              <p class="orientando"><strong>Orientando:</strong> {orientacao.orientando}</p>
+              <p class="info">
+                <span class="tipo">{orientacao.tipo_trabalho}</span>
+                {orientacao.instituicao && <span> • {orientacao.instituicao}</span>}
+                {orientacao.ano_inicio && <span> • Início: {orientacao.ano_inicio}</span>}
+              </p>
+            </article>
+          ))}
+        </div>
+        {emAndamento.length > 10 && (
+          <p class="more-info">Mostrando 10 de {emAndamento.length} orientações em andamento</p>
+        )}
+      </div>
+    )}
+
+    {concluidas.length > 0 && (
+      <div class="orientacoes-subsection">
+        <h3>Concluídas ({concluidas.length})</h3>
+        <div class="orientacoes-list">
+          {concluidasOrdenadas.slice(0, 15).map((orientacao) => (
+            <article class="orientacao">
+              <h4>{orientacao.titulo}</h4>
+              <p class="orientando"><strong>Orientando:</strong> {orientacao.orientando}</p>
+              <p class="info">
+                <span class="tipo">{orientacao.tipo_trabalho}</span>
+                {orientacao.instituicao && <span> • {orientacao.instituicao}</span>}
+                {orientacao.ano_conclusao && <span> • {orientacao.ano_conclusao}</span>}
+              </p>
+            </article>
+          ))}
+        </div>
+        {concluidas.length > 15 && (
+          <p class="more-info">Mostrando 15 de {concluidas.length} orientações concluídas</p>
+        )}
+      </div>
+    )}
+  </section>
+)}
+
+<style>
+  .orientacoes-section {
+    margin: 2rem 0;
+  }
+
+  .orientacoes-section h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0066cc;
+  }
+
+  .orientacoes-subsection {
+    margin-bottom: 2rem;
+  }
+
+  .orientacoes-subsection h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .orientacoes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .orientacao {
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-left: 4px solid #28a745;
+    border-radius: 4px;
+  }
+
+  .orientacao h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+  }
+
+  .orientacao .orientando {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  .orientacao .info {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .orientacao .tipo {
+    font-weight: 500;
+    color: #28a745;
+  }
+
+  .more-info {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .orientacoes-section h2 {
+      font-size: 1.3rem;
+    }
+
+    .orientacoes-subsection h3 {
+      font-size: 1.1rem;
+    }
+
+    .orientacao {
+      padding: 1rem;
+    }
+
+    .orientacao h4 {
+      font-size: 0.95rem;
+    }
+  }
+</style>

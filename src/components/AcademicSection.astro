@@ -1,0 +1,114 @@
+---
+import type { AcademicDegree } from '../utils/personData';
+import { formatPeriod } from '../utils/personData';
+
+interface Props {
+  degrees: AcademicDegree[];
+}
+
+const { degrees } = Astro.props;
+
+// Sort degrees by year (most recent first)
+const sortedDegrees = [...degrees].sort((a, b) => {
+  const yearA = parseInt(a.ano_conclusao) || 0;
+  const yearB = parseInt(b.ano_conclusao) || 0;
+  return yearB - yearA;
+});
+---
+
+{degrees.length > 0 && (
+  <section class="academic-section">
+    <h2>Academic Background</h2>
+    <div class="degrees-list">
+      {sortedDegrees.map((degree) => (
+        <article class="degree">
+          <h3>{degree.tipo}</h3>
+          <p class="institution">{degree.nome_instituicao}</p>
+          <p class="period">{formatPeriod(degree.ano_inicio, degree.ano_conclusao)}</p>
+          {degree.descricao && (
+            <p class="description">{degree.descricao}</p>
+          )}
+        </article>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .academic-section {
+    margin: 2rem 0;
+  }
+
+  .academic-section h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0066cc;
+  }
+
+  .degrees-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .degree {
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-left: 4px solid #0066cc;
+    border-radius: 4px;
+  }
+
+  .degree h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .degree .institution {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .degree .period {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+  }
+
+  .degree .description {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .academic-section h2 {
+      font-size: 1.3rem;
+    }
+
+    .degree {
+      padding: 1rem;
+    }
+
+    .degree h3 {
+      font-size: 1rem;
+    }
+
+    .degree .institution {
+      font-size: 0.95rem;
+    }
+
+    .degree .description {
+      font-size: 0.9rem;
+    }
+  }
+</style>

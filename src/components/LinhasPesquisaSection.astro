@@ -1,0 +1,85 @@
+---
+import type { LinhaPesquisa } from '../utils/personData';
+
+interface Props {
+  linhas: LinhaPesquisa[];
+}
+
+const { linhas } = Astro.props;
+---
+
+{linhas && linhas.length > 0 && (
+  <section class="linhas-section">
+    <h2>Linhas de Pesquisa</h2>
+    <div class="linhas-list">
+      {linhas.map((linha) => (
+        <article class="linha">
+          <h3>{linha.nome}</h3>
+          {linha.objetivo && (
+            <p class="objetivo">{linha.objetivo}</p>
+          )}
+        </article>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .linhas-section {
+    margin: 2rem 0;
+  }
+
+  .linhas-section h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0066cc;
+  }
+
+  .linhas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .linha {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-left: 4px solid #ffc107;
+    border-radius: 4px;
+  }
+
+  .linha h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .linha .objetivo {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #4a4a4a;
+  }
+
+  @media (max-width: 768px) {
+    .linhas-section h2 {
+      font-size: 1.3rem;
+    }
+
+    .linha {
+      padding: 0.875rem;
+    }
+
+    .linha h3 {
+      font-size: 0.95rem;
+    }
+
+    .linha .objetivo {
+      font-size: 0.9rem;
+    }
+  }
+</style>

@@ -1,0 +1,183 @@
+---
+import type { BancasData, Banca } from '../utils/personData';
+
+interface Props {
+  bancas: BancasData;
+}
+
+const { bancas } = Astro.props;
+
+// Helper to get all bancas
+function getAllBancas(bancasData: BancasData): Banca[] {
+  if (!bancasData) return [];
+  const all: Banca[] = [];
+  Object.values(bancasData).forEach((list: any) => {
+    if (Array.isArray(list)) {
+      all.push(...list);
+    }
+  });
+  return all;
+}
+
+const todasBancas = getAllBancas(bancas);
+
+// Sort by year (most recent first)
+const bancasOrdenadas = [...todasBancas].sort((a, b) => b.ano - a.ano);
+
+const hasBancas = todasBancas.length > 0;
+
+// Count by type
+const countMestrado = bancas?.mestrado?.length || 0;
+const countDoutorado = bancas?.doutorado?.length || 0;
+const countGraduacao = bancas?.graduacao?.length || 0;
+---
+
+{hasBancas && (
+  <section class="bancas-section">
+    <h2>Bancas</h2>
+
+    <div class="bancas-summary">
+      {countDoutorado > 0 && <span class="badge">Doutorado: {countDoutorado}</span>}
+      {countMestrado > 0 && <span class="badge">Mestrado: {countMestrado}</span>}
+      {countGraduacao > 0 && <span class="badge">Graduação: {countGraduacao}</span>}
+    </div>
+
+    <div class="bancas-list">
+      {bancasOrdenadas.slice(0, 15).map((banca) => (
+        <article class="banca">
+          <div class="banca-header">
+            <span class="tipo-badge">{banca.tipo}</span>
+            <span class="ano">{banca.ano}</span>
+          </div>
+          <h4>{banca.titulo_trabalho}</h4>
+          <p class="aluno"><strong>Candidato:</strong> {banca.aluno}</p>
+          <p class="curso">{banca.curso}</p>
+          {banca.universidade && (
+            <p class="universidade">{banca.universidade}</p>
+          )}
+        </article>
+      ))}
+    </div>
+
+    {todasBancas.length > 15 && (
+      <p class="more-info">Mostrando 15 de {todasBancas.length} bancas</p>
+    )}
+  </section>
+)}
+
+<style>
+  .bancas-section {
+    margin: 2rem 0;
+  }
+
+  .bancas-section h2 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #0066cc;
+  }
+
+  .bancas-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #e9ecef;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+  }
+
+  .bancas-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .banca {
+    padding: 1.25rem;
+    background: #f8f9fa;
+    border-left: 4px solid #6f42c1;
+    border-radius: 4px;
+  }
+
+  .banca-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .tipo-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #6f42c1;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .ano {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+  }
+
+  .banca h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+  }
+
+  .banca .aluno {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  .banca .curso,
+  .banca .universidade {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .more-info {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .bancas-section h2 {
+      font-size: 1.3rem;
+    }
+
+    .banca {
+      padding: 1rem;
+    }
+
+    .banca h4 {
+      font-size: 0.95rem;
+    }
+
+    .banca-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+  }
+</style>

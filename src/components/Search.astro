@@ -1,0 +1,293 @@
+---
+// Search component for site-wide search functionality
+---
+
+<div class="search-container" role="search">
+  <div class="search-input-wrapper">
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <path d="m21 21-4.35-4.35"></path>
+    </svg>
+    <input 
+      type="text" 
+      id="search-input" 
+      class="search-input"
+      placeholder="Buscar projetos, publicações, orientações..."
+      aria-label="Buscar projetos, publicações e conteúdo acadêmico"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </div>
+  <div id="search-results" class="search-results" aria-live="polite" aria-expanded="false"></div>
+</div>
+
+<script is:inline>
+  // Simple inline test
+  console.log('Search component script loaded');
+  
+  window.addEventListener('load', () => {
+    const input = document.getElementById('search-input');
+    console.log('Window loaded, input:', input);
+    
+    if (input) {
+      input.addEventListener('input', (e) => {
+        console.log('INLINE: Input detected:', e.target.value);
+      });
+      
+      input.addEventListener('keydown', (e) => {
+        console.log('INLINE: Key pressed:', e.key);
+      });
+      
+      console.log('INLINE: Event listeners attached to input');
+    }
+  });
+</script>
+
+<style>
+  .search-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+  }
+
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    color: #6b7280;
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem;
+    font-size: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background: white;
+    color: #1a1a1a;
+    transition: all 0.2s ease;
+    outline: none;
+    pointer-events: auto;
+    user-select: text;
+  }
+
+  .search-input:focus {
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+  }
+
+  .search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .search-results {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+  }
+
+  .search-results.active {
+    display: block;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .search-container {
+      max-width: 100%;
+    }
+
+    .search-input {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .search-results {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 100vh;
+      border-radius: 0;
+      border: none;
+    }
+  }
+
+  /* Loading state */
+  .search-results.loading::before {
+    content: '⏳ Buscando...';
+    display: block;
+    padding: 1rem;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  /* Empty state */
+  .search-results.empty::before {
+    content: 'Nenhum resultado encontrado';
+    display: block;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  /* Result items */
+  :global(.search-result-item) {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  :global(.search-result-item:hover),
+  :global(.search-result-item:focus),
+  :global(.search-result-item.selected) {
+    background-color: #f9fafb;
+    outline: none;
+  }
+
+  :global(.search-result-item:last-child) {
+    border-bottom: none;
+  }
+
+  :global(.search-result-title) {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 0.25rem 0;
+    line-height: 1.4;
+  }
+
+  :global(.search-result-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+  }
+
+  :global(.search-result-type) {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    background: #e5e7eb;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  :global(.search-result-content) {
+    font-size: 0.875rem;
+    color: #4a4a4a;
+    line-height: 1.5;
+  }
+
+  :global(.search-highlight) {
+    background-color: #fef3c7;
+    font-weight: 600;
+    padding: 0 0.125rem;
+  }
+
+  /* Filters */
+  :global(.search-filters) {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+  }
+
+  :global(.search-filter-btn) {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    background: white;
+    color: #4a4a4a;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  :global(.search-filter-btn:hover) {
+    border-color: #0066cc;
+    color: #0066cc;
+  }
+
+  :global(.search-filter-btn.active) {
+    background: #0066cc;
+    color: white;
+    border-color: #0066cc;
+  }
+
+  :global(.search-filter-count) {
+    margin-left: 0.25rem;
+    opacity: 0.7;
+  }
+
+  /* Result count */
+  :global(.search-result-count) {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+  }
+
+  /* Accessibility */
+  .search-input:focus-visible {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+  }
+
+  :global(.search-result-item:focus-visible) {
+    outline: 2px solid #0066cc;
+    outline-offset: -2px;
+  }
+
+  /* Touch targets for mobile */
+  @media (max-width: 768px) {
+    :global(.search-result-item) {
+      padding: 1.25rem 1rem;
+      min-height: 44px;
+    }
+
+    :global(.search-filter-btn) {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Scrollbar styling */
+  .search-results::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .search-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  .search-results::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+  }
+
+  .search-results::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+</style>

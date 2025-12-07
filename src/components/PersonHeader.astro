@@ -1,0 +1,129 @@
+---
+import type { PersonalInfo } from '../utils/personData';
+
+interface Props {
+  info: PersonalInfo;
+}
+
+const { info } = Astro.props;
+---
+
+<header class="person-header">
+  <h1>{info.nome_completo}</h1>
+  
+  {info.endereco_profissional && (
+    <div class="contact-info">
+      <p class="address">{info.endereco_profissional}</p>
+    </div>
+  )}
+  
+  {info.url && (
+    <div class="links">
+      <a href={info.url} target="_blank" rel="noopener noreferrer" class="lattes-link">
+        Lattes CV →
+      </a>
+    </div>
+  )}
+  
+  {info.texto_resumo && (
+    <div class="summary">
+      <h2>About</h2>
+      <p>{info.texto_resumo}</p>
+    </div>
+  )}
+  
+  {info.atualizacao_cv && (
+    <p class="last-updated">Last updated: {info.atualizacao_cv}</p>
+  )}
+</header>
+
+<style>
+  .person-header {
+    padding: 2rem 0;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 2rem;
+  }
+
+  .person-header h1 {
+    margin: 0 0 1rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.2;
+  }
+
+  .contact-info {
+    margin-bottom: 1rem;
+  }
+
+  .contact-info .address {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #4a4a4a;
+    line-height: 1.6;
+  }
+
+  .links {
+    margin-bottom: 1.5rem;
+  }
+
+  .lattes-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #0066cc;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .lattes-link:hover {
+    background: #0052a3;
+  }
+
+  .summary {
+    margin-top: 1.5rem;
+  }
+
+  .summary h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .summary p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  .last-updated {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .person-header {
+      padding: 1.5rem 0;
+    }
+
+    .person-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .summary h2 {
+      font-size: 1.1rem;
+    }
+
+    .summary p {
+      font-size: 0.95rem;
+    }
+  }
+</style>

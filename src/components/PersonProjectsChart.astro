@@ -1,0 +1,111 @@
+---
+import { aggregateProjectsForPerson } from '../utils/projectsData';
+import ProjectsBarChart from './ProjectsBarChart.astro';
+import type { PersonData } from '../utils/personData';
+
+interface Props {
+  personData: PersonData;
+  personName: string;
+}
+
+const { personData, personName } = Astro.props;
+
+// Aggregate projects for this specific person
+const aggregatedData = aggregateProjectsForPerson(personData);
+const hasProjects = aggregatedData.length > 0;
+---
+
+{hasProjects ? (
+  <section class="person-projects-chart-section">
+    <ProjectsBarChart 
+      title={`${personName}'s Projects by Year`}
+      aggregatedData={aggregatedData}
+      height={350}
+      showLegend={true}
+    />
+  </section>
+) : (
+  <section class="person-projects-chart-section">
+    <div class="no-projects-container">
+      <div class="no-projects-message">
+        <svg class="no-projects-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <h3>No Project Data Available</h3>
+        <p>This researcher currently has no recorded research, extension, or development projects.</p>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .person-projects-chart-section {
+    margin: 2rem 0;
+  }
+  
+  .no-projects-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .no-projects-message {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6b7280;
+  }
+  
+  .no-projects-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+    color: #d1d5db;
+  }
+  
+  .no-projects-message h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #4b5563;
+  }
+  
+  .no-projects-message p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .person-projects-chart-section {
+      margin: 1.5rem 0;
+    }
+    
+    .no-projects-container {
+      padding: 1rem;
+    }
+    
+    .no-projects-message {
+      padding: 2rem 1rem;
+    }
+    
+    .no-projects-icon {
+      width: 48px;
+      height: 48px;
+    }
+    
+    .no-projects-message h3 {
+      font-size: 1.1rem;
+    }
+    
+    .no-projects-message p {
+      font-size: 0.95rem;
+    }
+  }
+</style>

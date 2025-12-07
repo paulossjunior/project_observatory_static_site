@@ -1,0 +1,194 @@
+---
+import PersonCard from '../components/PersonCard.astro';
+import Search from '../components/Search.astro';
+import ProjectsBarChart from '../components/ProjectsBarChart.astro';
+import { getAllPeople } from '../utils/personData';
+
+const people = await getAllPeople();
+
+// Sort people alphabetically by name
+const sortedPeople = people.sort((a, b) => 
+  a.data.informacoes_pessoais.nome_completo.localeCompare(
+    b.data.informacoes_pessoais.nome_completo
+  )
+);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Academic Observatory - People</title>
+    <meta name="description" content="Browse profiles of researchers and academics" />
+  </head>
+  <body>
+    <main>
+      <header class="page-header">
+        <h1>Academic Observatory</h1>
+        <p class="intro">
+          Explore the profiles of our researchers and academics. Click on any card to view detailed information about their academic background, professional experience, and research projects.
+        </p>
+      </header>
+
+      <ProjectsBarChart 
+        title="Research, Extension, and Development Projects by Year"
+        height={400}
+        showLegend={true}
+      />
+
+      <Search />
+
+      <section class="people-grid">
+        {sortedPeople.map((person) => (
+          <PersonCard
+            name={person.data.informacoes_pessoais.nome_completo}
+            summary={person.data.informacoes_pessoais.texto_resumo}
+            id={person.id}
+          />
+        ))}
+      </section>
+
+      {sortedPeople.length === 0 && (
+        <p class="no-results">No people found.</p>
+      )}
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    --color-primary: #0066cc;
+    --color-text: #1a1a1a;
+    --color-text-light: #4a4a4a;
+    --color-border: #e0e0e0;
+    --color-bg: #ffffff;
+    --color-bg-alt: #f8f9fa;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg-alt);
+    color: var(--color-text);
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .page-header h1 {
+    margin: 0 0 1rem 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .page-header .intro {
+    margin: 0 auto;
+    max-width: 700px;
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    line-height: 1.7;
+  }
+
+  .people-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .no-results {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    padding: 3rem 0;
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    main {
+      padding: 1.5rem 1rem;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+    }
+
+    .page-header .intro {
+      font-size: 1rem;
+    }
+
+    .people-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .page-header h1 {
+      font-size: 1.75rem;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+  }
+</style>
+
+<script>
+  // Initialize search with dynamic imports
+  const initSearch = async () => {
+    try {
+      console.log('Starting search initialization...');
+      
+      // Check if elements exist
+      const searchInput = document.getElementById('search-input');
+      const searchResults = document.getElementById('search-results');
+      
+      if (!searchInput || !searchResults) {
+        console.error('Search elements not found!', { searchInput, searchResults });
+        return;
+      }
+      
+      console.log('Search elements found, loading modules...');
+      
+      // Dynamic import of modules
+      const { SearchEngine } = await import('../scripts/search-engine.js');
+      const { SearchUI } = await import('../scripts/search-ui.js');
+      
+      console.log('Modules loaded, creating instances...');
+      
+      const searchEngine = new SearchEngine();
+      const searchUI = new SearchUI(searchEngine);
+      searchUI.init();
+      
+      console.log('✓ Search initialized successfully');
+    } catch (error) {
+      console.error('✗ Error initializing search:', error);
+    }
+  };
+
+  // Wait for DOM to be ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSearch);
+  } else {
+    initSearch();
+  }
+</script>

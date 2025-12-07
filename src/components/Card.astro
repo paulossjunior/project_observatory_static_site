@@ -1,0 +1,85 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  period?: string;
+  type?: string;
+}
+
+const { title, subtitle, period, type } = Astro.props;
+---
+
+<div class="card">
+  {title && <h3>{title}</h3>}
+  {(subtitle || period || type) && (
+    <div class="card-meta">
+      {type && <span class="type-badge">{type}</span>}
+      {subtitle && <span>{subtitle}</span>}
+      {period && <span class="period">{period}</span>}
+    </div>
+  )}
+  <div class="card-content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .card {
+    background: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #3498db;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+  
+  .card-meta {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .type-badge {
+    background: #e74c3c;
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .period {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .card-content {
+    color: #555;
+    line-height: 1.6;
+  }
+  
+  .card-content :global(p) {
+    margin-bottom: 0.5rem;
+  }
+  
+  .card-content :global(ul) {
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+  }
+</style>

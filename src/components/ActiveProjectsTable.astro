@@ -1,0 +1,295 @@
+---
+import type { PersonData } from '../utils/personData';
+
+interface Props {
+  personData: PersonData;
+}
+
+const { personData } = Astro.props;
+
+// Get all active projects
+const currentYear = new Date().getFullYear();
+const allProjects = [
+  ...(personData.projetos_pesquisa || []).map(p => ({ ...p, type: 'Research' })),
+  ...(personData.projetos_extensao || []).map(p => ({ ...p, type: 'Extension' })),
+  ...(personData.projetos_desenvolvimento || []).map(p => ({ ...p, type: 'Development' }))
+];
+
+const activeProjects = allProjects.filter(p => 
+  p.ano_conclusao?.toLowerCase() === 'atual' || 
+  parseInt(p.ano_conclusao) >= currentYear
+).sort((a, b) => parseInt(b.ano_inicio) - parseInt(a.ano_inicio));
+
+const completedProjects = allProjects.filter(p => 
+  p.ano_conclusao?.toLowerCase() !== 'atual' && 
+  parseInt(p.ano_conclusao) < currentYear
+).sort((a, b) => parseInt(b.ano_conclusao) - parseInt(a.ano_conclusao)).slice(0, 10);
+---
+
+<div class="projects-tables">
+  <!-- Active Projects -->
+  {activeProjects.length > 0 && (
+    <div class="table-section">
+      <h3 class="table-title">
+        <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Active Projects ({activeProjects.length})
+      </h3>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Project Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Start Year</th>
+              <th>End Date</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {activeProjects.map(project => (
+              <tr>
+                <td class="project-name">{project.nome}</td>
+                <td>
+                  <span class={`badge badge-${project.type.toLowerCase()}`}>
+                    {project.type}
+                  </span>
+                </td>
+                <td>
+                  <span class="status-badge status-ongoing">
+                    <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Ongoing
+                  </span>
+                </td>
+                <td>{project.ano_inicio}</td>
+                <td class="end-date">
+                  {project.ano_conclusao?.toLowerCase() === 'atual' ? (
+                    <span class="ongoing-text">Ongoing</span>
+                  ) : (
+                    project.ano_conclusao
+                  )}
+                </td>
+                <td>
+                  {project.integrantes?.find(i => 
+                    i.nome === personData.informacoes_pessoais.nome_completo
+                  )?.papel || 'Member'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+  <!-- Recently Completed Projects -->
+  {completedProjects.length > 0 && (
+    <div class="table-section">
+      <h3 class="table-title">
+        <svg class="title-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Recently Completed Projects (Last 10)
+      </h3>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Project Name</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Period</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {completedProjects.map(project => {
+              const startYear = parseInt(project.ano_inicio);
+              const endYear = parseInt(project.ano_conclusao);
+              const duration = !isNaN(startYear) && !isNaN(endYear) ? endYear - startYear : 'N/A';
+              return (
+                <tr>
+                  <td class="project-name">{project.nome}</td>
+                  <td>
+                    <span class={`badge badge-${project.type.toLowerCase()}`}>
+                      {project.type}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="status-badge status-done">
+                      <svg class="status-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Done
+                    </span>
+                  </td>
+                  <td>{project.ano_inicio} - {project.ano_conclusao}</td>
+                  <td>{duration !== 'N/A' ? `${duration} year${duration !== 1 ? 's' : ''}` : duration}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .projects-tables {
+    margin: 2rem 0;
+  }
+
+  .table-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+  }
+
+  .table-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1rem 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .title-icon {
+    width: 20px;
+    height: 20px;
+    color: #667eea;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .data-table thead {
+    background: #f9fafb;
+  }
+
+  .data-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4b5563;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .data-table td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #1f2937;
+  }
+
+  .data-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .data-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .project-name {
+    font-weight: 500;
+    max-width: 400px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-research {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge-extension {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .badge-development {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .status-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .status-ongoing {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .status-done {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .end-date {
+    color: #6b7280;
+  }
+
+  .ongoing-text {
+    font-style: italic;
+    color: #3b82f6;
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .table-section {
+      padding: 1rem;
+    }
+
+    .data-table {
+      font-size: 0.8125rem;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 0.625rem 0.75rem;
+    }
+
+    .project-name {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+</style>

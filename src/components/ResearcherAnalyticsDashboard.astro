@@ -1,0 +1,717 @@
+---
+import GenericChart from './GenericChart.astro';
+import ResearcherStatsCards from './ResearcherStatsCards.astro';
+import ActiveProjectsTable from './ActiveProjectsTable.astro';
+import SupervisionsTable from './SupervisionsTable.astro';
+import type { PersonData } from '../utils/personData';
+import {
+  getPublicationsByYear,
+  getQualisDistribution,
+  getSupervisionStats,
+  getCommitteeStats,
+  getCollaborators,
+  getFundingSources,
+  getProjectDurations,
+  getAnnualActivity,
+  calculateImpactMetrics
+} from '../utils/researcherStats';
+
+interface Props {
+  personData: PersonData;
+}
+
+const { personData } = Astro.props;
+
+// Calculate all statistics
+const publicationsByYear = getPublicationsByYear(personData);
+const qualisDistribution = getQualisDistribution(personData);
+const supervisionStats = getSupervisionStats(personData);
+const committeeStats = getCommitteeStats(personData);
+const collaborators = getCollaborators(personData);
+const fundingSources = getFundingSources(personData);
+const projectDurations = getProjectDurations(personData);
+const annualActivity = getAnnualActivity(personData);
+const impactMetrics = calculateImpactMetrics(personData);
+
+// Calculate totals
+const totalPublications = publicationsByYear.reduce((sum, p) => sum + p.count, 0);
+const totalPublicationTypes = qualisDistribution.reduce((sum, q) => sum + q.count, 0);
+const totalSupervisions = supervisionStats.reduce((sum, s) => sum + s.total, 0);
+const totalCommittees = committeeStats.reduce((sum, c) => sum + c.count, 0);
+const totalCollaborations = collaborators.reduce((sum, c) => sum + c.projectCount, 0);
+const totalFundedProjects = fundingSources.reduce((sum, f) => sum + f.projectCount, 0);
+
+// Prepare chart data
+
+// 1. Publications Timeline
+const publicationsChartData = {
+  labels: publicationsByYear.map(p => p.year.toString()),
+  datasets: [{
+    label: 'Publications',
+    data: publicationsByYear.map(p => p.count),
+    borderColor: '#667eea',
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    fill: true,
+    tension: 0.4
+  }]
+};
+
+const publicationsChartOptions = {
+  plugins: {
+    datalabels: {
+      display: true,
+      align: 'top' as const,
+      anchor: 'end' as const,
+      color: '#667eea',
+      font: {
+        weight: 'bold' as const,
+        size: 11
+      },
+      formatter: (value: number) => value > 0 ? value : ''
+    }
+  }
+};
+
+// 2. Publication Type Distribution
+const typeColors: Record<string, string> = {
+  'A1': '#10b981',
+  'A2': '#3b82f6',
+  'B1': '#f59e0b',
+  'B2': '#ef4444',
+  'B3': '#8b5cf6',
+  'B4': '#ec4899',
+  'C': '#6b7280',
+  'Journal Article': '#667eea',
+  'Conference Paper': '#f59e0b',
+  'Book': '#10b981',
+  'Book Chapter': '#3b82f6',
+  'Extended Abstract': '#ec4899',
+  'Abstract': '#8b5cf6',
+  'Accepted Article': '#06b6d4',
+  'Presentation': '#f97316',
+  'Newspaper Article': '#84cc16',
+  'Other': '#9ca3af'
+};
+
+const qualisChartData = {
+  labels: qualisDistribution.map(q => q.qualis),
+  datasets: [{
+    data: qualisDistribution.map(q => q.count),
+    backgroundColor: qualisDistribution.map(q => typeColors[q.qualis] || '#9ca3af'),
+    borderWidth: 0
+  }]
+};
+
+const doughnutOptions = {
+  plugins: {
+    legend: {
+      position: 'right' as const,
+      labels: {
+        generateLabels: function(chart: any) {
+          const data = chart.data;
+          if (data.labels.length && data.datasets.length) {
+            return data.labels.map((label: string, i: number) => {
+              const value = data.datasets[0].data[i];
+              const percentage = ((value / totalPublicationTypes) * 100).toFixed(1);
+              return {
+                text: `${label}: ${value} (${percentage}%)`,
+                fillStyle: data.datasets[0].backgroundColor[i],
+                hidden: false,
+                index: i
+              };
+            });
+          }
+          return [];
+        }
+      }
+    },
+    tooltip: {
+      callbacks: {
+        label: function(context: any) {
+          const label = context.label || '';
+          const value = context.parsed;
+          const percentage = ((value / totalPublicationTypes) * 100).toFixed(1);
+          return `${label}: ${value} (${percentage}%)`;
+        }
+      }
+    }
+  }
+};
+
+// 3. Supervision Stats
+const supervisionChartData = {
+  labels: supervisionStats.map(s => s.type),
+  datasets: [
+    {
+      label: 'Ongoing',
+      data: supervisionStats.map(s => s.ongoing),
+      backgroundColor: '#3b82f6',
+      borderWidth: 0
+    },
+    {
+      label: 'Completed',
+      data: supervisionStats.map(s => s.completed),
+      backgroundColor: '#10b981',
+      borderWidth: 0
+    }
+  ]
+};
+
+const supervisionChartOptions = {
+  scales: {
+    x: { stacked: true },
+    y: { 
+      stacked: true,
+      beginAtZero: true,
+      ticks: { stepSize: 1 }
+    }
+  },
+  plugins: {
+    tooltip: {
+      callbacks: {
+        footer: function(tooltipItems: any[]) {
+          let sum = 0;
+          tooltipItems.forEach(item => sum += item.parsed.y);
+          return 'Total: ' + sum;
+        }
+      }
+    }
+  }
+};
+
+// 4. Committee Participation
+const committeeChartData = {
+  labels: committeeStats.map(c => c.type),
+  datasets: [{
+    label: 'Participations',
+    data: committeeStats.map(c => c.count),
+    backgroundColor: '#8b5cf6',
+    borderWidth: 0
+  }]
+};
+
+const committeeChartOptions = {
+  indexAxis: 'y' as const,
+  plugins: {
+    datalabels: {
+      display: true,
+      align: 'end' as const,
+      anchor: 'end' as const,
+      color: '#1f2937',
+      font: {
+        weight: 'bold' as const,
+        size: 11
+      }
+    }
+  }
+};
+
+// 5. Top Collaborators
+const collaboratorsChartData = {
+  labels: collaborators.slice(0, 10).map(c => c.name.split(' ').slice(0, 2).join(' ')),
+  datasets: [{
+    label: 'Projects',
+    data: collaborators.slice(0, 10).map(c => c.projectCount),
+    backgroundColor: '#ec4899',
+    borderWidth: 0
+  }]
+};
+
+const collaboratorsChartOptions = {
+  indexAxis: 'y' as const,
+  plugins: {
+    datalabels: {
+      display: true,
+      align: 'end' as const,
+      anchor: 'end' as const,
+      color: '#1f2937',
+      font: {
+        weight: 'bold' as const,
+        size: 11
+      }
+    }
+  }
+};
+
+// 6. Funding Sources
+const fundingChartData = {
+  labels: fundingSources.map(f => f.agency.split(' ').slice(0, 3).join(' ')),
+  datasets: [{
+    label: 'Projects',
+    data: fundingSources.map(f => f.projectCount),
+    backgroundColor: '#f59e0b',
+    borderWidth: 0
+  }]
+};
+
+const fundingChartOptions = {
+  indexAxis: 'y' as const,
+  plugins: {
+    datalabels: {
+      display: true,
+      align: 'end' as const,
+      anchor: 'end' as const,
+      color: '#1f2937',
+      font: {
+        weight: 'bold' as const,
+        size: 11
+      }
+    }
+  }
+};
+
+// 7. Project Duration Distribution
+const durationData = projectDurations
+  .filter(p => p.duration !== null && p.duration >= 0)
+  .map(p => p.duration as number);
+
+const durationBuckets = [0, 0, 0, 0, 0]; // <1yr, 1-2yr, 2-3yr, 3-5yr, >5yr
+durationData.forEach(d => {
+  if (d < 1) durationBuckets[0]++;
+  else if (d <= 2) durationBuckets[1]++;
+  else if (d <= 3) durationBuckets[2]++;
+  else if (d <= 5) durationBuckets[3]++;
+  else durationBuckets[4]++;
+});
+
+const durationChartData = {
+  labels: ['<1 year', '1-2 years', '2-3 years', '3-5 years', '>5 years'],
+  datasets: [{
+    label: 'Projects',
+    data: durationBuckets,
+    backgroundColor: '#06b6d4',
+    borderWidth: 0
+  }]
+};
+
+const durationChartOptions = {
+  plugins: {
+    datalabels: {
+      display: true,
+      align: 'end' as const,
+      anchor: 'end' as const,
+      color: '#1f2937',
+      font: {
+        weight: 'bold' as const,
+        size: 11
+      },
+      formatter: (value: number) => value > 0 ? value : ''
+    }
+  }
+};
+
+// 8. Annual Activity
+const activityChartData = {
+  labels: annualActivity.map(a => a.year.toString()),
+  datasets: [
+    {
+      label: 'Publications',
+      data: annualActivity.map(a => a.publications),
+      borderColor: '#667eea',
+      backgroundColor: 'rgba(102, 126, 234, 0.5)',
+      tension: 0.4
+    },
+    {
+      label: 'Projects',
+      data: annualActivity.map(a => a.projects),
+      borderColor: '#f59e0b',
+      backgroundColor: 'rgba(245, 158, 11, 0.5)',
+      tension: 0.4
+    },
+    {
+      label: 'Supervisions',
+      data: annualActivity.map(a => a.supervisions),
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16, 185, 129, 0.5)',
+      tension: 0.4
+    },
+    {
+      label: 'Committees',
+      data: annualActivity.map(a => a.committees),
+      borderColor: '#8b5cf6',
+      backgroundColor: 'rgba(139, 92, 246, 0.5)',
+      tension: 0.4
+    }
+  ]
+};
+
+// 9. Impact Metrics Radar
+const impactChartData = {
+  labels: ['Research', 'Teaching', 'Extension', 'Service', 'Collaboration', 'Funding'],
+  datasets: [{
+    label: 'Impact Score',
+    data: [
+      impactMetrics.research,
+      impactMetrics.teaching,
+      impactMetrics.extension,
+      impactMetrics.service,
+      impactMetrics.collaboration,
+      impactMetrics.funding
+    ],
+    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+    borderColor: '#667eea',
+    borderWidth: 2,
+    pointBackgroundColor: '#667eea',
+    pointBorderColor: '#fff',
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: '#667eea'
+  }]
+};
+
+const radarOptions = {
+  scales: {
+    r: {
+      beginAtZero: true,
+      max: 100,
+      ticks: {
+        stepSize: 20
+      }
+    }
+  }
+};
+---
+
+<div class="analytics-dashboard">
+  <div class="dashboard-header">
+    <h2 class="dashboard-title">Research Analytics Dashboard</h2>
+    <button class="toggle-dashboard" id="toggle-dashboard" aria-label="Toggle analytics dashboard">
+      <span class="toggle-text">Hide Analytics</span>
+      <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+  
+  <div class="dashboard-content" id="dashboard-content">
+    <!-- Stats Cards -->
+    <ResearcherStatsCards personData={personData} />
+
+  <!-- Charts Grid -->
+  <div class="charts-grid">
+    
+    <!-- Publications Timeline -->
+    {publicationsByYear.length > 0 && (
+      <div class="chart-full-width">
+        <GenericChart
+          chartId="publications-timeline"
+          title={`Publications Over Time (Total: ${totalPublications})`}
+          chartType="line"
+          chartData={publicationsChartData}
+          chartOptions={publicationsChartOptions}
+          height={300}
+        />
+        <p class="chart-description">
+          This chart shows the researcher's publication output over the years, including journal articles, conference papers, books, book chapters, and other bibliographic productions. The trend line helps identify periods of high productivity and research activity patterns.
+        </p>
+      </div>
+    )}
+
+    <!-- Publication Type Distribution -->
+    {qualisDistribution.length > 0 && (
+      <div class="chart-half-width">
+        <GenericChart
+          chartId="publication-type-distribution"
+          title={`Publication Type Distribution (Total: ${totalPublicationTypes})`}
+          chartType="doughnut"
+          chartData={qualisChartData}
+          chartOptions={doughnutOptions}
+          height={300}
+        />
+        <p class="chart-description">
+          Distribution of publications by type and Qualis classification. Shows the diversity of research outputs including journal articles, conference papers, books, chapters, and other formats. Percentages indicate the proportion of each type in the total production.
+        </p>
+      </div>
+    )}
+
+    <!-- Impact Metrics -->
+    <div class="chart-half-width">
+      <GenericChart
+        chartId="impact-metrics"
+        title="Impact Metrics (0-100 Scale)"
+        chartType="radar"
+        chartData={impactChartData}
+        chartOptions={radarOptions}
+        height={300}
+      />
+      <p class="chart-description">
+        Multi-dimensional assessment of the researcher's impact across six key areas: Research (publications), Teaching (student supervisions), Extension (community projects), Service (committee participation), Collaboration (research partners), and Funding (grant success). Scores are normalized to a 0-100 scale.
+      </p>
+    </div>
+
+    <!-- Supervision Stats -->
+    {supervisionStats.length > 0 && (
+      <div class="chart-half-width">
+        <GenericChart
+          chartId="supervision-stats"
+          title={`Student Supervisions by Type (Total: ${totalSupervisions})`}
+          chartType="bar"
+          chartData={supervisionChartData}
+          chartOptions={supervisionChartOptions}
+          height={300}
+        />
+        <p class="chart-description">
+          Breakdown of student supervisions by academic level (PhD, Master's, Undergraduate, etc.). Blue bars represent ongoing supervisions, while green bars show completed ones. This demonstrates the researcher's teaching and mentoring contributions.
+        </p>
+      </div>
+    )}
+
+    <!-- Committee Participation -->
+    {committeeStats.length > 0 && (
+      <div class="chart-half-width">
+        <GenericChart
+          chartId="committee-stats"
+          title={`Committee Participations (Total: ${totalCommittees})`}
+          chartType="bar"
+          chartData={committeeChartData}
+          chartOptions={committeeChartOptions}
+          height={300}
+        />
+        <p class="chart-description">
+          Number of thesis and dissertation committees the researcher has participated in, categorized by type (PhD defense, Master's defense, qualification exams, etc.). Reflects the researcher's service to the academic community and recognition by peers.
+        </p>
+      </div>
+    )}
+
+    <!-- Annual Activity -->
+    {annualActivity.length > 0 && (
+      <div class="chart-full-width">
+        <GenericChart
+          chartId="annual-activity"
+          title="Annual Activity Trends (All Activities)"
+          chartType="line"
+          chartData={activityChartData}
+          height={300}
+        />
+        <p class="chart-description">
+          Comprehensive view of all academic activities over time, combining publications, new projects, student supervisions, and committee participations. This multi-line chart reveals overall productivity patterns and helps identify peak activity periods and career evolution.
+        </p>
+      </div>
+    )}
+
+    <!-- Top Collaborators -->
+    {collaborators.length > 0 && (
+      <div class="chart-half-width">
+        <GenericChart
+          chartId="top-collaborators"
+          title={`Top Collaborators (${collaborators.length} total, ${totalCollaborations} collaborations)`}
+          chartType="bar"
+          chartData={collaboratorsChartData}
+          chartOptions={collaboratorsChartOptions}
+          height={300}
+        />
+        <p class="chart-description">
+          Top 10 most frequent research collaborators based on joint project participation. The number indicates how many projects were conducted together. This highlights key research partnerships and collaborative networks.
+        </p>
+      </div>
+    )}
+
+    <!-- Funding Sources -->
+    {fundingSources.length > 0 && (
+      <div class="chart-half-width">
+        <GenericChart
+          chartId="funding-sources"
+          title={`Funding Sources (${fundingSources.length} agencies, ${totalFundedProjects} projects)`}
+          chartType="bar"
+          chartData={fundingChartData}
+          chartOptions={fundingChartOptions}
+          height={300}
+        />
+        <p class="chart-description">
+          Funding agencies that have supported the researcher's projects, ranked by number of funded projects. Demonstrates the researcher's success in securing research grants and the diversity of funding sources.
+        </p>
+      </div>
+    )}
+
+    <!-- Project Duration -->
+    {durationData.length > 0 && (
+      <div class="chart-full-width">
+        <GenericChart
+          chartId="project-duration"
+          title="Project Duration Distribution"
+          chartType="bar"
+          chartData={durationChartData}
+          chartOptions={durationChartOptions}
+          height={250}
+        />
+        <p class="chart-description">
+          Distribution of projects by duration (from start to completion). Shows whether the researcher tends to work on short-term or long-term projects. This can indicate research scope, project complexity, and planning approaches.
+        </p>
+      </div>
+    )}
+
+  </div>
+
+  <!-- Tables Section -->
+  <div class="tables-section">
+    <h2 class="section-title">Detailed Information</h2>
+    
+    <ActiveProjectsTable personData={personData} />
+    
+    <SupervisionsTable personData={personData} />
+  </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('toggle-dashboard');
+    const content = document.getElementById('dashboard-content');
+    const toggleText = toggleBtn?.querySelector('.toggle-text');
+    const toggleIcon = toggleBtn?.querySelector('.toggle-icon');
+    
+    if (toggleBtn && content && toggleText && toggleIcon) {
+      toggleBtn.addEventListener('click', () => {
+        const isHidden = content.style.display === 'none';
+        
+        if (isHidden) {
+          content.style.display = 'block';
+          toggleText.textContent = 'Hide Analytics';
+          toggleIcon.style.transform = 'rotate(0deg)';
+        } else {
+          content.style.display = 'none';
+          toggleText.textContent = 'Show Analytics';
+          toggleIcon.style.transform = 'rotate(-90deg)';
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .analytics-dashboard {
+    margin: 2rem 0;
+  }
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+  }
+
+  .dashboard-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+  }
+
+  .toggle-dashboard {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    color: #4b5563;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toggle-dashboard:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+
+  .toggle-icon {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s;
+  }
+
+  .dashboard-content {
+    display: block;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .chart-full-width {
+    grid-column: 1 / -1;
+  }
+
+  .chart-half-width {
+    grid-column: span 1;
+  }
+
+  .chart-description {
+    margin: 0.75rem 0 0 0;
+    padding: 0.875rem 1rem;
+    background: #f9fafb;
+    border-left: 3px solid #667eea;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #4b5563;
+  }
+
+  .tables-section {
+    margin-top: 3rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+  }
+
+  @media (max-width: 1024px) {
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+
+    .chart-half-width {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .analytics-dashboard {
+      margin: 1.5rem 0;
+    }
+
+    .dashboard-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .dashboard-title {
+      font-size: 1.5rem;
+    }
+
+    .toggle-dashboard {
+      align-self: stretch;
+      justify-content: center;
+    }
+
+    .charts-grid {
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .chart-description {
+      font-size: 0.8125rem;
+      padding: 0.75rem 0.875rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+    }
+
+    .tables-section {
+      margin-top: 2rem;
+    }
+  }
+</style>

@@ -23,8 +23,10 @@ export class SearchEngine {
 
     this.loadPromise = (async () => {
       try {
+        console.log('Loading search index from /search-index.json');
         const response = await fetch('/search-index.json');
         if (!response.ok) {
+          console.error('Failed to fetch search index:', response.status, response.statusText);
           throw new Error(`Failed to load search index: ${response.status}`);
         }
         

@@ -28,10 +28,14 @@
 
   // Initialize search when DOM is ready
   document.addEventListener('DOMContentLoaded', async () => {
-    const searchEngine = new SearchEngine();
-    const searchUI = new SearchUI(searchEngine);
-    
-    searchUI.init();
+    try {
+      const searchEngine = new SearchEngine();
+      const searchUI = new SearchUI(searchEngine);
+      
+      searchUI.init();
+    } catch (error) {
+      console.error('Failed to initialize search:', error);
+    }
   });
 </script>
 

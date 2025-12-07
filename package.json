@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview"
+    "build": "node scripts/generate-search-index.js && astro build",
+    "preview": "astro preview",
+    "generate-index": "node scripts/generate-search-index.js"
   },
   "dependencies": {
     "astro": "^4.0.0",

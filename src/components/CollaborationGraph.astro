@@ -37,7 +37,7 @@ allProjects.forEach(project => {
       existing.projectCount++;
       existing.totalCount++;
       existing.roles.add(integrante.papel);
-      existing.sources.add('Projetos');
+      existing.sources.add('Projects');
       collaboratorsMap.set(integrante.nome, existing);
     }
   });
@@ -86,7 +86,7 @@ allPublications.forEach((pub: any) => {
         existing.publicationCount++;
         existing.totalCount++;
         existing.roles.add('Coautor');
-        existing.sources.add('Publicações');
+        existing.sources.add('Publications');
         collaboratorsMap.set(author, existing);
       }
     });
@@ -130,7 +130,7 @@ const edges = topCollaborators.map(([name, data]) => ({
   value: data.totalCount,
   projectCount: data.projectCount,
   publicationCount: data.publicationCount,
-  label: `${data.totalCount} colaboraç${data.totalCount > 1 ? 'ões' : 'ão'}`
+  label: `${data.totalCount} collaboration${data.totalCount > 1 ? 's' : ''}`
 }));
 
 const graphData = { nodes, edges };
@@ -138,22 +138,22 @@ const hasCollaborators = collaboratorsMap.size > 0;
 ---
 
 <div class="collaboration-graph-container">
-  <h3 class="graph-title">Rede de Colaboração - Top 10</h3>
+  <h3 class="graph-title">Collaboration Network - Top 10</h3>
   
   {hasCollaborators ? (
     <>
       <div class="graph-stats">
         <span class="stat-item">
-          <strong>{totalCollaborators}</strong> colaborador{totalCollaborators !== 1 ? 'es' : ''} total
+          <strong>{totalCollaborators}</strong> collaborator{totalCollaborators !== 1 ? 's' : ''} total
         </span>
         <span class="stat-item">
-          <strong>{topCollaborators.length}</strong> top exibidos
+          <strong>{topCollaborators.length}</strong> top displayed
         </span>
         <span class="stat-item">
-          <strong>{totalProjects}</strong> projeto{totalProjects !== 1 ? 's' : ''}
+          <strong>{totalProjects}</strong> project{totalProjects !== 1 ? 's' : ''}
         </span>
         <span class="stat-item">
-          <strong>{totalPublications}</strong> publicaç{totalPublications !== 1 ? 'ões' : 'ão'}
+          <strong>{totalPublications}</strong> publication{totalPublications !== 1 ? 's' : ''}
         </span>
       </div>
       
@@ -162,24 +162,24 @@ const hasCollaborators = collaboratorsMap.size > 0;
       <div class="graph-legend">
         <div class="legend-item">
           <span class="legend-dot center"></span>
-          <span>Pesquisador</span>
+          <span>Researcher</span>
         </div>
         <div class="legend-item">
           <span class="legend-dot collaborator-project"></span>
-          <span>Mais projetos</span>
+          <span>More projects</span>
         </div>
         <div class="legend-item">
           <span class="legend-dot collaborator-publication"></span>
-          <span>Mais publicações</span>
+          <span>More publications</span>
         </div>
         <div class="legend-note">
-          * Tamanho dos nós e espessura das linhas representam o número de colaborações
+          * Node size and line thickness represent the number of collaborations
         </div>
       </div>
     </>
   ) : (
     <div class="no-data">
-      <p>Nenhum colaborador encontrado nos projetos.</p>
+      <p>No collaborators found in projects.</p>
     </div>
   )}
 </div>
@@ -242,7 +242,7 @@ const hasCollaborators = collaboratorsMap.size > 0;
           
           // Tooltip para a linha
           const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-          title.textContent = `${edge.label}\n${edge.projectCount} projeto(s)\n${edge.publicationCount} publicação(ões)`;
+          title.textContent = `${edge.label}\n${edge.projectCount} project(s)\n${edge.publicationCount} publication(s)`;
           line.appendChild(title);
           
           edgesGroup.appendChild(line);
@@ -274,11 +274,11 @@ const hasCollaborators = collaboratorsMap.size > 0;
         } else {
           const details = [
             node.label,
-            `Total: ${node.totalCount} colaboraç${node.totalCount > 1 ? 'ões' : 'ão'}`,
-            `Projetos: ${node.projectCount}`,
-            `Publicações: ${node.publicationCount}`,
-            `Papéis: ${node.roles}`,
-            `Fontes: ${node.sources}`
+            `Total: ${node.totalCount} collaboration${node.totalCount > 1 ? 's' : ''}`,
+            `Projects: ${node.projectCount}`,
+            `Publications: ${node.publicationCount}`,
+            `Roles: ${node.roles}`,
+            `Sources: ${node.sources}`
           ];
           title.textContent = details.join('\n');
         }

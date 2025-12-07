@@ -20,10 +20,10 @@ const roleLabels = {
 ---
 
 <section class="related-people">
-  <h3>Pesquisadores ({people.length})</h3>
+  <h3>Researchers ({people.length})</h3>
   
   {people.length === 0 ? (
-    <p class="empty-state">Nenhum pesquisador associado a esta linha de pesquisa.</p>
+    <p class="empty-state">No researchers associated with this research line.</p>
   ) : (
     <>
       <div class="filters">
@@ -92,7 +92,7 @@ const roleLabels = {
       </div>
       
       <p class="result-count">
-        Mostrando <span id="people-visible-count">{people.length}</span> de {people.length} pesquisadores
+        Showing <span id="people-visible-count">{people.length}</span> of {people.length} researchers
       </p>
     </>
   )}

@@ -16,7 +16,7 @@ const publicationYears = [...new Set(publications.map(p => p.ano))].sort((a, b) 
 ---
 
 <section class="related-publications">
-  <h3>Publicações Relacionadas ({publications.length})</h3>
+  <h3>Related Publications ({publications.length})</h3>
   
   {publications.length === 0 ? (
     <p class="empty-state">Nenhuma publicação associada a esta linha de pesquisa.</p>
@@ -61,7 +61,7 @@ const publicationYears = [...new Set(publications.map(p => p.ano))].sort((a, b) 
                 <span class="sort-icon">⇅</span>
               </th>
               <th>Autores</th>
-              <th>Pesquisador</th>
+              <th>Researcher</th>
             </tr>
           </thead>
           <tbody>
@@ -96,7 +96,7 @@ const publicationYears = [...new Set(publications.map(p => p.ano))].sort((a, b) 
       </div>
       
       <p class="result-count">
-        Mostrando <span id="pub-visible-count">{publications.length}</span> de {publications.length} publicações
+        Showing <span id="pub-visible-count">{publications.length}</span> of {publications.length} publications
       </p>
     </>
   )}

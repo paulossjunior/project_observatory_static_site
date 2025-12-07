@@ -27,6 +27,31 @@ const { person } = Astro.props;
 if (!person) {
   return Astro.redirect('/404');
 }
+
+// Check which sections have content
+const hasAcademic = person.formacao_academica && person.formacao_academica.length > 0;
+const hasAreas = person.areas_de_atuacao && person.areas_de_atuacao.length > 0;
+const hasResearchLines = person.linhas_de_pesquisa && person.linhas_de_pesquisa.length > 0;
+const hasResearchProjects = person.projetos_pesquisa && person.projetos_pesquisa.length > 0;
+const hasExtensionProjects = person.projetos_extensao && person.projetos_extensao.length > 0;
+const hasDevelopmentProjects = person.projetos_desenvolvimento && person.projetos_desenvolvimento.length > 0;
+const hasPublications = person.producao_bibliografica && (
+  (person.producao_bibliografica.artigos_periodicos && person.producao_bibliografica.artigos_periodicos.length > 0) ||
+  (person.producao_bibliografica.livros_publicados && person.producao_bibliografica.livros_publicados.length > 0) ||
+  (person.producao_bibliografica.capitulos_livros && person.producao_bibliografica.capitulos_livros.length > 0) ||
+  (person.producao_bibliografica.trabalhos_completos_congressos && person.producao_bibliografica.trabalhos_completos_congressos.length > 0) ||
+  (person.producao_bibliografica.resumos_expandidos && person.producao_bibliografica.resumos_expandidos.length > 0) ||
+  (person.producao_bibliografica.resumos_congressos && person.producao_bibliografica.resumos_congressos.length > 0) ||
+  (person.producao_bibliografica.artigos_aceitos && person.producao_bibliografica.artigos_aceitos.length > 0) ||
+  (person.producao_bibliografica.apresentacoes_trabalhos && person.producao_bibliografica.apresentacoes_trabalhos.length > 0) ||
+  (person.producao_bibliografica.textos_jornais && person.producao_bibliografica.textos_jornais.length > 0) ||
+  (person.producao_bibliografica.outras_producoes && person.producao_bibliografica.outras_producoes.length > 0)
+);
+const hasOrientations = person.orientacoes && (
+  (person.orientacoes.em_andamento && Object.values(person.orientacoes.em_andamento).some((arr: any) => Array.isArray(arr) && arr.length > 0)) ||
+  (person.orientacoes.concluidas && Object.values(person.orientacoes.concluidas).some((arr: any) => Array.isArray(arr) && arr.length > 0))
+);
+const hasCommittees = person.bancas && Object.values(person.bancas).some((arr: any) => Array.isArray(arr) && arr.length > 0);
 ---
 
 <!DOCTYPE html>
@@ -41,7 +66,7 @@ if (!person) {
     <nav class="breadcrumb">
       <a href="/" class="breadcrumb-link">Home</a>
       <span class="breadcrumb-separator">/</span>
-      <a href="/" class="breadcrumb-link">Pesquisadores</a>
+      <a href="/" class="breadcrumb-link">Researchers</a>
       <span class="breadcrumb-separator">/</span>
       <span class="breadcrumb-current">{person.informacoes_pessoais.nome_completo}</span>
     </nav>
@@ -56,20 +81,20 @@ if (!person) {
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             <polyline points="9 22 9 12 15 12 15 22"></polyline>
           </svg>
-          <span>Voltar ao Início</span>
+          <span>Back to Home</span>
         </a>
-        <h3 class="nav-title">Navegação</h3>
+        <h3 class="nav-title">Navigation</h3>
         <ul class="nav-list">
-          <li><a href="#overview" class="nav-link">Visão Geral</a></li>
-          <li><a href="#academic" class="nav-link">Formação Acadêmica</a></li>
-          <li><a href="#areas" class="nav-link">Áreas de Atuação</a></li>
-          <li><a href="#research-lines" class="nav-link">Linhas de Pesquisa</a></li>
-          <li><a href="#research-projects" class="nav-link">Projetos de Pesquisa</a></li>
-          <li><a href="#extension-projects" class="nav-link">Projetos de Extensão</a></li>
-          <li><a href="#development-projects" class="nav-link">Projetos de Desenvolvimento</a></li>
-          <li><a href="#publications" class="nav-link">Produção Bibliográfica</a></li>
-          <li><a href="#orientations" class="nav-link">Orientações</a></li>
-          <li><a href="#committees" class="nav-link">Bancas</a></li>
+          <li><a href="#overview" class="nav-link">Overview</a></li>
+          {hasAcademic && <li><a href="#academic" class="nav-link">Academic Background</a></li>}
+          {hasAreas && <li><a href="#areas" class="nav-link">Research Areas</a></li>}
+          {hasResearchLines && <li><a href="#research-lines" class="nav-link">Research Lines</a></li>}
+          {hasResearchProjects && <li><a href="#research-projects" class="nav-link">Research Projects</a></li>}
+          {hasExtensionProjects && <li><a href="#extension-projects" class="nav-link">Extension Projects</a></li>}
+          {hasDevelopmentProjects && <li><a href="#development-projects" class="nav-link">Development Projects</a></li>}
+          {hasPublications && <li><a href="#publications" class="nav-link">Publications</a></li>}
+          {hasOrientations && <li><a href="#orientations" class="nav-link">Supervisions</a></li>}
+          {hasCommittees && <li><a href="#committees" class="nav-link">Committees</a></li>}
         </ul>
       </div>
     </nav>
@@ -81,50 +106,68 @@ if (!person) {
         <CollaborationGraph personData={person} />
       </div>
       
-      <div id="academic">
-        <AcademicSection degrees={person.formacao_academica || []} />
-      </div>
+      {hasAcademic && (
+        <div id="academic">
+          <AcademicSection degrees={person.formacao_academica || []} />
+        </div>
+      )}
       
-      <div id="areas">
-        <AreasAtuacaoSection areas={person.areas_de_atuacao || []} />
-      </div>
+      {hasAreas && (
+        <div id="areas">
+          <AreasAtuacaoSection areas={person.areas_de_atuacao || []} />
+        </div>
+      )}
       
-      <div id="research-lines">
-        <LinhasPesquisaSection linhas={person.linhas_de_pesquisa || []} personData={person} />
-      </div>
+      {hasResearchLines && (
+        <div id="research-lines">
+          <LinhasPesquisaSection linhas={person.linhas_de_pesquisa || []} personData={person} />
+        </div>
+      )}
       
-      <div id="research-projects">
-        <ProjectsSection 
-          projects={person.projetos_pesquisa || []} 
-          title="Research Projects" 
-        />
-      </div>
+      {hasResearchProjects && (
+        <div id="research-projects">
+          <ProjectsSection 
+            projects={person.projetos_pesquisa || []} 
+            title="Research Projects" 
+          />
+        </div>
+      )}
       
-      <div id="extension-projects">
-        <ProjectsSection 
-          projects={person.projetos_extensao || []} 
-          title="Extension Projects" 
-        />
-      </div>
+      {hasExtensionProjects && (
+        <div id="extension-projects">
+          <ProjectsSection 
+            projects={person.projetos_extensao || []} 
+            title="Extension Projects" 
+          />
+        </div>
+      )}
       
-      <div id="development-projects">
-        <ProjectsSection 
-          projects={person.projetos_desenvolvimento || []} 
-          title="Development Projects" 
-        />
-      </div>
+      {hasDevelopmentProjects && (
+        <div id="development-projects">
+          <ProjectsSection 
+            projects={person.projetos_desenvolvimento || []} 
+            title="Development Projects" 
+          />
+        </div>
+      )}
       
-      <div id="publications">
-        <ProducaoBibliograficaSection producao={person.producao_bibliografica || {}} />
-      </div>
+      {hasPublications && (
+        <div id="publications">
+          <ProducaoBibliograficaSection producao={person.producao_bibliografica || {}} />
+        </div>
+      )}
       
-      <div id="orientations">
-        <OrientacoesSection orientacoes={person.orientacoes || {}} />
-      </div>
+      {hasOrientations && (
+        <div id="orientations">
+          <OrientacoesSection orientacoes={person.orientacoes || {}} />
+        </div>
+      )}
       
-      <div id="committees">
-        <BancasSection bancas={person.bancas || {}} />
-      </div>
+      {hasCommittees && (
+        <div id="committees">
+          <BancasSection bancas={person.bancas || {}} />
+        </div>
+      )}
     </main>
 
     <script>

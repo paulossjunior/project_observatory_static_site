@@ -14,7 +14,7 @@ const projectYears = [...new Set(projects.map(p => p.ano_inicio))].sort((a, b) =
 ---
 
 <section class="related-projects">
-  <h3>Projetos Relacionados ({projects.length})</h3>
+  <h3>Related Projects ({projects.length})</h3>
   
   {projects.length === 0 ? (
     <p class="empty-state">Nenhum projeto associado a esta linha de pesquisa.</p>
@@ -74,7 +74,7 @@ const projectYears = [...new Set(projects.map(p => p.ano_inicio))].sort((a, b) =
                 Ano
                 <span class="sort-icon">⇅</span>
               </th>
-              <th>Pesquisador</th>
+              <th>Researcher</th>
             </tr>
           </thead>
           <tbody>
@@ -109,7 +109,7 @@ const projectYears = [...new Set(projects.map(p => p.ano_inicio))].sort((a, b) =
       </div>
       
       <p class="result-count">
-        Mostrando <span id="visible-count">{projects.length}</span> de {projects.length} projetos
+        Showing <span id="visible-count">{projects.length}</span> of {projects.length} projects
       </p>
     </>
   )}

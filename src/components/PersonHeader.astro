@@ -42,7 +42,7 @@ const { info } = Astro.props;
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            Atualizado em {info.atualizacao_cv}
+            Last updated {info.atualizacao_cv}
           </span>
         )}
       </div>
@@ -51,7 +51,7 @@ const { info } = Astro.props;
   
   {info.texto_resumo && (
     <div class="summary">
-      <h2>Sobre</h2>
+      <h2>About</h2>
       <p>{info.texto_resumo}</p>
     </div>
   )}

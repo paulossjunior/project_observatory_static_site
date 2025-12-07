@@ -10,9 +10,19 @@ interface Props {
 
 const { linhas, personData, personId } = Astro.props;
 
-// Sort research lines alphabetically
-const sortedLinhas = [...linhas].sort((a, b) => 
-  a.nome.localeCompare(b.nome, 'pt-BR')
+// Remove duplicates and sort research lines alphabetically
+const uniqueLinhas = linhas.reduce((acc: LinhaPesquisa[], linha) => {
+  const exists = acc.find(l => 
+    l.nome.toLowerCase().trim() === linha.nome.toLowerCase().trim()
+  );
+  if (!exists) {
+    acc.push(linha);
+  }
+  return acc;
+}, []);
+
+const sortedLinhas = uniqueLinhas.sort((a, b) => 
+  a.nome.localeCompare(b.nome, 'en')
 );
 
 // Function to get associated items for each research line
@@ -56,7 +66,7 @@ function getAssociatedItems(linhaName: string) {
 
 {linhas && linhas.length > 0 && (
   <section class="linhas-section" id="linhas">
-    <h2>Linhas de Pesquisa</h2>
+    <h2>Research Lines</h2>
     <div class="linhas-list">
       {sortedLinhas.map((linha, index) => {
         const items = getAssociatedItems(linha.nome);
@@ -83,17 +93,17 @@ function getAssociatedItems(linhaName: string) {
               {totalItems > 0 && (
                 <div class="linha-stats">
                   {items.projetos.length > 0 && (
-                    <span class="stat-badge stat-projetos" title="Projetos">
+                    <span class="stat-badge stat-projetos" title="Projects">
                       📊 {items.projetos.length}
                     </span>
                   )}
                   {items.artigos.length > 0 && (
-                    <span class="stat-badge stat-artigos" title="Artigos">
+                    <span class="stat-badge stat-artigos" title="Articles">
                       📄 {items.artigos.length}
                     </span>
                   )}
                   {items.orientacoes.length > 0 && (
-                    <span class="stat-badge stat-orientacoes" title="Orientações">
+                    <span class="stat-badge stat-orientacoes" title="Supervisions">
                       👥 {items.orientacoes.length}
                     </span>
                   )}
@@ -103,7 +113,7 @@ function getAssociatedItems(linhaName: string) {
                 <button 
                   class="expand-button" 
                   onclick={`toggleLinhaDetails('${linhaId}')`}
-                  aria-label="Expandir detalhes"
+                  aria-label="Expand details"
                   aria-expanded="false"
                   id={`btn-${linhaId}`}
                 >
@@ -120,7 +130,7 @@ function getAssociatedItems(linhaName: string) {
             <div class="linha-details" id={linhaId} style="display: none;">
               {items.projetos.length > 0 && (
                 <div class="related-section">
-                  <h4>📊 Projetos Relacionados ({items.projetos.length})</h4>
+                  <h4>📊 Related Projects ({items.projetos.length})</h4>
                   <ul>
                     {items.projetos.map(p => (
                       <li>{p.nome} <span class="year">({p.ano_inicio})</span></li>
@@ -131,7 +141,7 @@ function getAssociatedItems(linhaName: string) {
               
               {items.artigos.length > 0 && (
                 <div class="related-section">
-                  <h4>📄 Artigos Relacionados ({items.artigos.length})</h4>
+                  <h4>📄 Related Articles ({items.artigos.length})</h4>
                   <ul>
                     {items.artigos.map(a => (
                       <li>{a.titulo} <span class="year">({a.ano})</span></li>
@@ -142,7 +152,7 @@ function getAssociatedItems(linhaName: string) {
               
               {items.orientacoes.length > 0 && (
                 <div class="related-section">
-                  <h4>👥 Orientações Relacionadas ({items.orientacoes.length})</h4>
+                  <h4>👥 Related Supervisions ({items.orientacoes.length})</h4>
                   <ul>
                     {items.orientacoes.map(o => (
                       <li>{o.orientando} - {o.titulo} <span class="year">({o.ano_inicio})</span></li>

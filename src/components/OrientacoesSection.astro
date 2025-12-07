@@ -36,7 +36,7 @@ const hasOrientacoes = emAndamento.length > 0 || concluidas.length > 0;
 
 {hasOrientacoes && (
   <section class="orientacoes-section" id="orientacoes">
-    <h2>Orientações</h2>
+    <h2>Supervisions</h2>
 
     {emAndamento.length > 0 && (
       <div class="orientacoes-subsection">
@@ -55,7 +55,7 @@ const hasOrientacoes = emAndamento.length > 0 || concluidas.length > 0;
           ))}
         </div>
         {emAndamento.length > 10 && (
-          <p class="more-info">Mostrando 10 de {emAndamento.length} orientações em andamento</p>
+          <p class="more-info">Showing 10 of {emAndamento.length} ongoing supervisions</p>
         )}
       </div>
     )}
@@ -77,7 +77,7 @@ const hasOrientacoes = emAndamento.length > 0 || concluidas.length > 0;
           ))}
         </div>
         {concluidas.length > 15 && (
-          <p class="more-info">Mostrando 15 de {concluidas.length} orientações concluídas</p>
+          <p class="more-info">Showing 15 of {concluidas.length} completed supervisions</p>
         )}
       </div>
     )}

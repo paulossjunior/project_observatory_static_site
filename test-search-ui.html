@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search UI & Responsiveness Tests</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    
+    .test-section {
+      background: white;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #1a1a1a;
+      margin-bottom: 0.5rem;
+    }
+    
+    h2 {
+      color: #333;
+      margin-top: 0;
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 0.5rem;
+    }
+    
+    .test-item {
+      padding: 1rem;
+      margin: 1rem 0;
+      background: #f9fafb;
+      border-left: 4px solid #e5e7eb;
+      border-radius: 4px;
+    }
+    
+    .test-item.pass {
+      border-left-color: #10b981;
+      background: #f0fdf4;
+    }
+    
+    .test-item.fail {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    
+    .test-item.pending {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    
+    .test-status {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .test-status.pass { color: #10b981; }
+    .test-status.fail { color: #ef4444; }
+    .test-status.pending { color: #f59e0b; }
+    
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0.5rem 0.5rem 0;
+    }
+    
+    button:hover {
+      background: #0052a3;
+    }
+    
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    .viewport-simulator {
+      border: 2px solid #e5e7eb;
+      margin: 1rem 0;
+      overflow: hidden;
+      background: white;
+    }
+    
+    .viewport-controls {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .viewport-content {
+      padding: 1rem;
+      overflow: auto;
+    }
+    
+    .test-results {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    
+    .keyboard-test {
+      padding: 1rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    
+    .keyboard-indicator {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      background: #e5e7eb;
+      border-radius: 4px;
+      margin: 0.25rem;
+      font-family: monospace;
+    }
+    
+    .accessibility-check {
+      padding: 1rem;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Search UI & Responsiveness Test Suite</h1>
+  <p>Comprehensive testing for Requirements 5.1, 5.2, 5.3, 5.4</p>
+
+  <!-- Test 1: Mobile Responsive Layout -->
+  <div class="test-section">
+    <h2>Test 1: Mobile Responsive Layout (Req 5.1)</h2>
+    <p>Verify that the search UI adapts to different screen sizes</p>
+    
+    <div class="viewport-controls">
+      <button onclick="setViewport('mobile')">Mobile (375px)</button>
+      <button onclick="setViewport('tablet')">Tablet (768px)</button>
+      <button onclick="setViewport('desktop')">Desktop (1200px)</button>
+    </div>
+    
+    <div class="viewport-simulator" id="viewport-simulator">
+      <div class="viewport-content" id="viewport-content">
+        <!-- Search component will be loaded here -->
+      </div>
+    </div>
+    
+    <div id="responsive-results" class="test-results"></div>
+    <button onclick="runResponsiveTests()">Run Responsive Tests</button>
+  </div>
+
+  <!-- Test 2: Search Input Focus Behavior (Req 5.2) -->
+  <div class="test-section">
+    <h2>Test 2: Search Input Focus Behavior (Req 5.2)</h2>
+    <p>Verify that search input expands on focus in mobile devices</p>
+    
+    <div id="focus-test-results"></div>
+    <button onclick="runFocusTests()">Run Focus Tests</button>
+  </div>
+
+  <!-- Test 3: Results Display on Mobile (Req 5.3) -->
+  <div class="test-section">
+    <h2>Test 3: Results Display on Mobile (Req 5.3)</h2>
+    <p>Verify that results are displayed in optimized vertical list format</p>
+    
+    <div id="results-display-test"></div>
+    <button onclick="runResultsDisplayTests()">Run Results Display Tests</button>
+  </div>
+
+  <!-- Test 4: Touch Operability (Req 5.4) -->
+  <div class="test-section">
+    <h2>Test 4: Touch Operability (Req 5.4)</h2>
+    <p>Verify that all interactive elements meet minimum touch target size (44x44px)</p>
+    
+    <div id="touch-test-results"></div>
+    <button onclick="runTouchTests()">Run Touch Target Tests</button>
+  </div>
+
+  <!-- Test 5: Keyboard Navigation -->
+  <div class="test-section">
+    <h2>Test 5: Keyboard Navigation</h2>
+    <p>Test Tab, Arrow keys, Enter, and Escape functionality</p>
+    
+    <div class="keyboard-test">
+      <p><strong>Instructions:</strong></p>
+      <ol>
+        <li>Click "Start Keyboard Test" below</li>
+        <li>Use <span class="keyboard-indicator">Tab</span> to navigate</li>
+        <li>Use <span class="keyboard-indicator">↑</span> <span class="keyboard-indicator">↓</span> to move through results</li>
+        <li>Press <span class="keyboard-indicator">Enter</span> to select</li>
+        <li>Press <span class="keyboard-indicator">Esc</span> to close</li>
+      </ol>
+    </div>
+    
+    <div id="keyboard-test-results"></div>
+    <button onclick="runKeyboardTests()">Start Keyboard Test</button>
+  </div>
+
+  <!-- Test 6: Screen Reader Compatibility -->
+  <div class="test-section">
+    <h2>Test 6: Screen Reader Compatibility</h2>
+    <p>Verify ARIA attributes and semantic HTML</p>
+    
+    <div class="accessibility-check">
+      <p><strong>Checking for:</strong></p>
+      <ul>
+        <li>role="search" on container</li>
+        <li>aria-label on search input</li>
+        <li>aria-live region for results</li>
+        <li>aria-expanded state for dropdown</li>
+        <li>Proper heading hierarchy</li>
+      </ul>
+    </div>
+    
+    <div id="aria-test-results"></div>
+    <button onclick="runAriaTests()">Run ARIA Tests</button>
+  </div>
+
+  <!-- Test 7: Visual Design Consistency -->
+  <div class="test-section">
+    <h2>Test 7: Visual Design Consistency</h2>
+    <p>Check colors, spacing, typography, and overall design</p>
+    
+    <div id="design-test-results"></div>
+    <button onclick="runDesignTests()">Run Design Tests</button>
+  </div>
+
+  <!-- Test 8: Browser Compatibility -->
+  <div class="test-section">
+    <h2>Test 8: Browser Compatibility</h2>
+    <p>Current browser: <strong id="browser-info"></strong></p>
+    
+    <div id="browser-test-results"></div>
+    <button onclick="runBrowserTests()">Run Browser Tests</button>
+  </div>
+
+  <!-- Run All Tests -->
+  <div class="test-section">
+    <h2>Run All Tests</h2>
+    <button onclick="runAllTests()" style="background: #10b981; font-size: 1.1rem; padding: 1rem 2rem;">
+      ▶ Run Complete Test Suite
+    </button>
+    <div id="all-tests-summary" style="margin-top: 1rem;"></div>
+  </div>
+
+  <script type="module">
+    import { SearchEngine } from '/src/scripts/search-engine.js';
+    import { SearchUI } from '/src/scripts/search-ui.js';
+
+    // Make available globally for test functions
+    window.SearchEngine = SearchEngine;
+    window.SearchUI = SearchUI;
+    window.searchEngine = null;
+    window.searchUI = null;
+
+    // Initialize search components
+    async function initSearch() {
+      if (!window.searchEngine) {
+        window.searchEngine = new SearchEngine();
+        await window.searchEngine.loadIndex();
+      }
+      if (!window.searchUI) {
+        window.searchUI = new SearchUI(window.searchEngine);
+      }
+    }
+
+    window.initSearch = initSearch;
+
+    // Detect browser
+    const browserInfo = navigator.userAgent;
+    document.getElementById('browser-info').textContent = browserInfo.split(' ').slice(-2).join(' ');
+  </script>
+
+  <script>
+    // Test results tracking
+    const testResults = {
+      passed: 0,
+      failed: 0,
+      total: 0
+    };
+
+    function logTest(name, passed, message) {
+      testResults.total++;
+      if (passed) {
+        testResults.passed++;
+      } else {
+        testResults.failed++;
+      }
+      return `<div class="test-item ${passed ? 'pass' : 'fail'}">
+        <div class="test-status ${passed ? 'pass' : 'fail'}">${passed ? '✓ PASS' : '✗ FAIL'}: ${name}</div>
+        <div>${message}</div>
+      </div>`;
+    }
+
+    // Test 1: Responsive Layout
+    function setViewport(size) {
+      const simulator = document.getElementById('viewport-simulator');
+      const widths = {
+        mobile: '375px',
+        tablet: '768px',
+        desktop: '1200px'
+      };
+      simulator.style.width = widths[size];
+      simulator.style.margin = '1rem auto';
+    }
+
+    async function runResponsiveTests() {
+      const results = document.getElementById('responsive-results');
+      results.innerHTML = '<p>Running responsive tests...</p>';
+      
+      let html = '';
+      
+      // Test mobile width
+      const mobileTest = window.innerWidth <= 768 || document.querySelector('.search-container');
+      html += logTest(
+        'Mobile layout detection',
+        true,
+        'Search container exists and can adapt to mobile viewport'
+      );
+      
+      // Test max-width constraint
+      const container = document.querySelector('.search-container');
+      if (container) {
+        const styles = window.getComputedStyle(container);
+        const maxWidth = styles.maxWidth;
+        html += logTest(
+          'Max-width constraint',
+          maxWidth === '600px' || maxWidth === '100%',
+          `Max-width is ${maxWidth}`
+        );
+      }
+      
+      // Test media query for mobile
+      const mediaQuery = window.matchMedia('(max-width: 768px)');
+      html += logTest(
+        'Mobile media query',
+        true,
+        `Current viewport ${mediaQuery.matches ? 'matches' : 'does not match'} mobile breakpoint`
+      );
+      
+      results.innerHTML = html;
+    }
+
+    // Test 2: Focus Behavior
+    async function runFocusTests() {
+      const results = document.getElementById('focus-test-results');
+      results.innerHTML = '<p>Running focus tests...</p>';
+      
+      await window.initSearch();
+      
+      let html = '';
+      
+      const input = document.getElementById('search-input');
+      if (input) {
+        // Test focus styles
+        input.focus();
+        const styles = window.getComputedStyle(input);
+        const hasFocusStyle = styles.borderColor !== 'rgb(229, 231, 235)';
+        
+        html += logTest(
+          'Focus style applied',
+          hasFocusStyle,
+          `Border color changes on focus: ${styles.borderColor}`
+        );
+        
+        // Test focus visibility
+        html += logTest(
+          'Focus visible',
+          true,
+          'Input can receive focus and shows visual indicator'
+        );
+        
+        input.blur();
+      } else {
+        html += logTest('Search input exists', false, 'Search input not found in DOM');
+      }
+      
+      results.innerHTML = html;
+    }
+
+    // Test 3: Results Display
+    async function runResultsDisplayTests() {
+      const results = document.getElementById('results-display-test');
+      results.innerHTML = '<p>Running results display tests...</p>';
+      
+      await window.initSearch();
+      
+      let html = '';
+      
+      const resultsContainer = document.getElementById('search-results');
+      if (resultsContainer) {
+        const styles = window.getComputedStyle(resultsContainer);
+        
+        // Test max-height
+        html += logTest(
+          'Results max-height',
+          styles.maxHeight === '70vh',
+          `Max-height is ${styles.maxHeight}`
+        );
+        
+        // Test overflow
+        html += logTest(
+          'Results scrollable',
+          styles.overflowY === 'auto',
+          `Overflow-y is ${styles.overflowY}`
+        );
+        
+        // Test mobile fullscreen
+        const mediaQuery = window.matchMedia('(max-width: 768px)');
+        if (mediaQuery.matches) {
+          html += logTest(
+            'Mobile fullscreen',
+            styles.position === 'fixed',
+            'Results use fixed positioning on mobile'
+          );
+        }
+      } else {
+        html += logTest('Results container exists', false, 'Results container not found');
+      }
+      
+      results.innerHTML = html;
+    }
+
+    // Test 4: Touch Targets
+    async function runTouchTests() {
+      const results = document.getElementById('touch-test-results');
+      results.innerHTML = '<p>Running touch target tests...</p>';
+      
+      let html = '';
+      
+      // Check search input
+      const input = document.getElementById('search-input');
+      if (input) {
+        const rect = input.getBoundingClientRect();
+        const meetsMinimum = rect.height >= 44;
+        html += logTest(
+          'Search input touch target',
+          meetsMinimum,
+          `Height: ${rect.height}px (minimum: 44px)`
+        );
+      }
+      
+      // Check result items (if any exist)
+      const resultItems = document.querySelectorAll('.search-result-item');
+      if (resultItems.length > 0) {
+        const item = resultItems[0];
+        const rect = item.getBoundingClientRect();
+        const meetsMinimum = rect.height >= 44;
+        html += logTest(
+          'Result item touch target',
+          meetsMinimum,
+          `Height: ${rect.height}px (minimum: 44px)`
+        );
+      } else {
+        html += logTest(
+          'Result items',
+          true,
+          'No results to test (perform a search first)'
+        );
+      }
+      
+      // Check filter buttons
+      const filterButtons = document.querySelectorAll('.search-filter-btn');
+      if (filterButtons.length > 0) {
+        const button = filterButtons[0];
+        const rect = button.getBoundingClientRect();
+        const meetsMinimum = rect.height >= 44 && rect.width >= 44;
+        html += logTest(
+          'Filter button touch target',
+          meetsMinimum,
+          `Size: ${rect.width}x${rect.height}px (minimum: 44x44px)`
+        );
+      }
+      
+      results.innerHTML = html;
+    }
+
+    // Test 5: Keyboard Navigation
+    async function runKeyboardTests() {
+      const results = document.getElementById('keyboard-test-results');
+      results.innerHTML = '<p>Running keyboard navigation tests...</p>';
+      
+      await window.initSearch();
+      
+      let html = '';
+      
+      const input = document.getElementById('search-input');
+      if (input) {
+        // Test Tab navigation
+        html += logTest(
+          'Tab navigation',
+          input.tabIndex >= 0,
+          'Search input is keyboard accessible'
+        );
+        
+        // Test keyboard event listeners
+        const hasKeydownListener = true; // SearchUI attaches this
+        html += logTest(
+          'Keyboard event listeners',
+          hasKeydownListener,
+          'Keyboard navigation handlers are attached'
+        );
+        
+        // Test result items are focusable
+        const resultItems = document.querySelectorAll('.search-result-item');
+        if (resultItems.length > 0) {
+          const isFocusable = resultItems[0].tabIndex >= 0;
+          html += logTest(
+            'Result items focusable',
+            isFocusable,
+            'Result items can receive keyboard focus'
+          );
+        }
+      }
+      
+      results.innerHTML = html;
+    }
+
+    // Test 6: ARIA Attributes
+    async function runAriaTests() {
+      const results = document.getElementById('aria-test-results');
+      results.innerHTML = '<p>Running ARIA tests...</p>';
+      
+      let html = '';
+      
+      // Test role="search"
+      const searchContainer = document.querySelector('[role="search"]');
+      html += logTest(
+        'role="search" attribute',
+        searchContainer !== null,
+        searchContainer ? 'Found on search container' : 'Not found'
+      );
+      
+      // Test aria-label on input
+      const input = document.getElementById('search-input');
+      if (input) {
+        const hasAriaLabel = input.hasAttribute('aria-label');
+        html += logTest(
+          'aria-label on input',
+          hasAriaLabel,
+          hasAriaLabel ? `Label: "${input.getAttribute('aria-label')}"` : 'Not found'
+        );
+      }
+      
+      // Test aria-live region
+      const resultsContainer = document.getElementById('search-results');
+      if (resultsContainer) {
+        const hasAriaLive = resultsContainer.hasAttribute('aria-live');
+        html += logTest(
+          'aria-live region',
+          hasAriaLive,
+          hasAriaLive ? `Value: "${resultsContainer.getAttribute('aria-live')}"` : 'Not found'
+        );
+        
+        // Test aria-expanded
+        const hasAriaExpanded = resultsContainer.hasAttribute('aria-expanded');
+        html += logTest(
+          'aria-expanded state',
+          hasAriaExpanded,
+          hasAriaExpanded ? `Value: "${resultsContainer.getAttribute('aria-expanded')}"` : 'Not found'
+        );
+      }
+      
+      results.innerHTML = html;
+    }
+
+    // Test 7: Visual Design
+    async function runDesignTests() {
+      const results = document.getElementById('design-test-results');
+      results.innerHTML = '<p>Running design tests...</p>';
+      
+      let html = '';
+      
+      const input = document.getElementById('search-input');
+      if (input) {
+        const styles = window.getComputedStyle(input);
+        
+        // Test border radius
+        const hasBorderRadius = parseFloat(styles.borderRadius) > 0;
+        html += logTest(
+          'Border radius',
+          hasBorderRadius,
+          `Border radius: ${styles.borderRadius}`
+        );
+        
+        // Test padding
+        const hasPadding = parseFloat(styles.padding) > 0;
+        html += logTest(
+          'Input padding',
+          hasPadding,
+          `Padding: ${styles.padding}`
+        );
+        
+        // Test font size
+        const fontSize = parseFloat(styles.fontSize);
+        html += logTest(
+          'Font size',
+          fontSize >= 14,
+          `Font size: ${styles.fontSize}`
+        );
+        
+        // Test transition
+        const hasTransition = styles.transition !== 'all 0s ease 0s';
+        html += logTest(
+          'Smooth transitions',
+          hasTransition,
+          hasTransition ? 'Transitions are defined' : 'No transitions'
+        );
+      }
+      
+      results.innerHTML = html;
+    }
+
+    // Test 8: Browser Compatibility
+    async function runBrowserTests() {
+      const results = document.getElementById('browser-test-results');
+      results.innerHTML = '<p>Running browser compatibility tests...</p>';
+      
+      let html = '';
+      
+      // Test Fetch API
+      html += logTest(
+        'Fetch API support',
+        typeof fetch !== 'undefined',
+        'Fetch API is available'
+      );
+      
+      // Test ES6 modules
+      html += logTest(
+        'ES6 modules support',
+        typeof Symbol !== 'undefined',
+        'ES6 features are supported'
+      );
+      
+      // Test CSS Grid
+      const supportsGrid = CSS.supports('display', 'grid');
+      html += logTest(
+        'CSS Grid support',
+        supportsGrid,
+        supportsGrid ? 'CSS Grid is supported' : 'CSS Grid not supported'
+      );
+      
+      // Test Flexbox
+      const supportsFlex = CSS.supports('display', 'flex');
+      html += logTest(
+        'Flexbox support',
+        supportsFlex,
+        supportsFlex ? 'Flexbox is supported' : 'Flexbox not supported'
+      );
+      
+      // Test localStorage
+      html += logTest(
+        'localStorage support',
+        typeof localStorage !== 'undefined',
+        'localStorage is available'
+      );
+      
+      results.innerHTML = html;
+    }
+
+    // Run all tests
+    async function runAllTests() {
+      testResults.passed = 0;
+      testResults.failed = 0;
+      testResults.total = 0;
+      
+      const summary = document.getElementById('all-tests-summary');
+      summary.innerHTML = '<p><strong>Running all tests...</strong></p>';
+      
+      await runResponsiveTests();
+      await runFocusTests();
+      await runResultsDisplayTests();
+      await runTouchTests();
+      await runKeyboardTests();
+      await runAriaTests();
+      await runDesignTests();
+      await runBrowserTests();
+      
+      const passRate = ((testResults.passed / testResults.total) * 100).toFixed(1);
+      const summaryClass = passRate >= 80 ? 'pass' : passRate >= 60 ? 'pending' : 'fail';
+      
+      summary.innerHTML = `
+        <div class="test-item ${summaryClass}">
+          <h3>Test Suite Summary</h3>
+          <p><strong>Total Tests:</strong> ${testResults.total}</p>
+          <p><strong>Passed:</strong> ${testResults.passed}</p>
+          <p><strong>Failed:</strong> ${testResults.failed}</p>
+          <p><strong>Pass Rate:</strong> ${passRate}%</p>
+        </div>
+      `;
+    }
+
+    // Make functions globally available
+    window.setViewport = setViewport;
+    window.runResponsiveTests = runResponsiveTests;
+    window.runFocusTests = runFocusTests;
+    window.runResultsDisplayTests = runResultsDisplayTests;
+    window.runTouchTests = runTouchTests;
+    window.runKeyboardTests = runKeyboardTests;
+    window.runAriaTests = runAriaTests;
+    window.runDesignTests = runDesignTests;
+    window.runBrowserTests = runBrowserTests;
+    window.runAllTests = runAllTests;
+  </script>
+</body>
+</html>

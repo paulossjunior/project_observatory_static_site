@@ -30,7 +30,7 @@ function truncateText(text, maxLength = 200) {
 function extractProjects(projects, type, personData) {
   if (!projects || !Array.isArray(projects)) return [];
   
-  return projects.map(project => {
+  return projects.map((project, index) => {
     const description = Array.isArray(project.descricao) 
       ? project.descricao.join(' ') 
       : (project.descricao || '');
@@ -39,6 +39,9 @@ function extractProjects(projects, type, personData) {
       ? project.integrantes.map(i => i.nome).join(', ')
       : '';
     
+    // Generate same ID as in ProjectsSection component
+    const projectId = `projeto-${index}-${project.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 50)}`;
+    
     return {
       title: project.nome || 'Sem título',
       content: truncateText(description),
@@ -46,7 +49,7 @@ function extractProjects(projects, type, personData) {
       category: project.tipo || type,
       personName: personData.personName,
       personId: personData.personId,
-      url: `/person/${personData.personId}#projetos`,
+      url: `/person/${personData.personSlug}#${projectId}`,
       metadata: {
         year: project.ano_inicio || '',
         yearEnd: project.ano_conclusao || '',
@@ -70,7 +73,8 @@ function extractPublications(producaoBibliografica, personData) {
   
   // Articles in journals
   if (producaoBibliografica.artigos_periodicos) {
-    producaoBibliografica.artigos_periodicos.forEach(article => {
+    producaoBibliografica.artigos_periodicos.forEach((article, index) => {
+      const artigoId = `artigo-${index}-${article.titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 50)}`;
       entries.push({
         title: article.titulo || 'Sem título',
         content: truncateText(`${article.autores || ''} ${article.revista || ''}`),
@@ -78,7 +82,7 @@ function extractPublications(producaoBibliografica, personData) {
         category: 'Artigo em Periódico',
         personName: personData.personName,
         personId: personData.personId,
-        url: `/person/${personData.personId}#publicacoes`,
+        url: `/person/${personData.personSlug}#${artigoId}`,
         metadata: {
           year: article.ano || '',
           authors: article.autores || '',
@@ -99,7 +103,7 @@ function extractPublications(producaoBibliografica, personData) {
         category: 'Trabalho Completo em Congresso',
         personName: personData.personName,
         personId: personData.personId,
-        url: `/person/${personData.personId}#publicacoes`,
+        url: `/person/${personData.personSlug}#publicacoes`,
         metadata: {
           year: paper.ano || '',
           authors: paper.autores || '',
@@ -119,7 +123,7 @@ function extractPublications(producaoBibliografica, personData) {
         category: 'Capítulo de Livro',
         personName: personData.personName,
         personId: personData.personId,
-        url: `/person/${personData.personId}#publicacoes`,
+        url: `/person/${personData.personSlug}#publicacoes`,
         metadata: {
           year: chapter.ano || '',
           authors: chapter.autores || '',
@@ -164,7 +168,7 @@ function extractOrientations(orientacoes, personData) {
           category: type.replace(/_/g, ' '),
           personName: personData.personName,
           personId: personData.personId,
-          url: `/person/${personData.personId}#orientacoes`,
+          url: `/person/${personData.personSlug}#orientacoes`,
           metadata: {
             year: orientation.ano || '',
             student: orientation.orientando || '',
@@ -199,7 +203,7 @@ function extractEducationAndAreas(formacao, areas, linhas, personData) {
         category: edu.tipo || 'Formação',
         personName: personData.personName,
         personId: personData.personId,
-        url: `/person/${personData.personId}#formacao`,
+        url: `/person/${personData.personSlug}#formacao`,
         metadata: {
           year: edu.ano_conclusao || edu.ano_inicio || '',
           institution: edu.nome_instituicao || ''
@@ -218,7 +222,7 @@ function extractEducationAndAreas(formacao, areas, linhas, personData) {
         category: 'Área de Atuação',
         personName: personData.personName,
         personId: personData.personId,
-        url: `/person/${personData.personId}#areas`,
+        url: `/person/${personData.personSlug}#areas`,
         metadata: {}
       });
     });
@@ -234,7 +238,7 @@ function extractEducationAndAreas(formacao, areas, linhas, personData) {
         category: 'Linha de Pesquisa',
         personName: personData.personName,
         personId: personData.personId,
-        url: `/person/${personData.personId}#linhas`,
+        url: `/person/${personData.personSlug}#linhas`,
         metadata: {}
       });
     });
@@ -272,9 +276,11 @@ function loadAllSourceFiles() {
       
       // Extract person metadata
       const personInfo = data.informacoes_pessoais || {};
+      const personSlug = extractSlugFromFilename(file);
       const personData = {
         personName: personInfo.nome_completo || 'Unknown',
         personId: personInfo.id_lattes || '',
+        personSlug: personSlug,
         fileName: file,
         data: data
       };
@@ -287,6 +293,31 @@ function loadAllSourceFiles() {
   }
   
   return allData;
+}
+
+/**
+ * Extract person slug from filename
+ * Example: "00_Paulo-Sergio-dos-Santos-Junior_8400407353673370.json" -> "paulo-sergio-dos-santos-junior"
+ * @param {string} filename - Filename
+ * @returns {string} Person slug
+ */
+function extractSlugFromFilename(filename) {
+  // Remove .json extension
+  const withoutExtension = filename.replace('.json', '');
+  
+  // Split by underscore and get the middle part (name)
+  const parts = withoutExtension.split('_');
+  
+  // If we have at least 3 parts (number_name_id), extract the name
+  if (parts.length >= 3) {
+    // Join all parts except first and last (in case name has underscores)
+    const nameParts = parts.slice(1, -1);
+    const name = nameParts.join('-');
+    return name.toLowerCase();
+  }
+  
+  // Fallback: use the whole filename without extension
+  return withoutExtension.toLowerCase();
 }
 
 /**

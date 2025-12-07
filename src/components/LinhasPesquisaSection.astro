@@ -9,7 +9,7 @@ const { linhas } = Astro.props;
 ---
 
 {linhas && linhas.length > 0 && (
-  <section class="linhas-section">
+  <section class="linhas-section" id="linhas">
     <h2>Linhas de Pesquisa</h2>
     <div class="linhas-list">
       {linhas.map((linha) => (

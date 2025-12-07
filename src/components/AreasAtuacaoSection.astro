@@ -9,7 +9,7 @@ const { areas } = Astro.props;
 ---
 
 {areas && areas.length > 0 && (
-  <section class="areas-section">
+  <section class="areas-section" id="areas">
     <h2>Áreas de Atuação</h2>
     <div class="areas-list">
       {areas.map((area) => (

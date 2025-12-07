@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Performance Tests</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f5f5f5;
+    }
+    
+    .test-section {
+      background: white;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #1a1a1a;
+      margin-bottom: 0.5rem;
+    }
+    
+    h2 {
+      color: #333;
+      margin-top: 0;
+      border-bottom: 2px solid #0066cc;
+      padding-bottom: 0.5rem;
+    }
+    
+    .metric-card {
+      background: #f9fafb;
+      padding: 1.5rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      border-left: 4px solid #e5e7eb;
+    }
+    
+    .metric-card.good {
+      border-left-color: #10b981;
+      background: #f0fdf4;
+    }
+    
+    .metric-card.warning {
+      border-left-color: #f59e0b;
+      background: #fffbeb;
+    }
+    
+    .metric-card.bad {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0.5rem 0;
+    }
+    
+    .metric-label {
+      font-size: 0.875rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .metric-description {
+      font-size: 0.875rem;
+      color: #4a4a4a;
+      margin-top: 0.5rem;
+    }
+    
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 0.5rem 0.5rem 0.5rem 0;
+    }
+    
+    button:hover {
+      background: #0052a3;
+    }
+    
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: #0066cc;
+      transition: width 0.3s ease;
+    }
+    
+    .test-log {
+      background: #1a1a1a;
+      color: #10b981;
+      padding: 1rem;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 1rem 0;
+    }
+    
+    .test-log .error {
+      color: #ef4444;
+    }
+    
+    .test-log .warning {
+      color: #f59e0b;
+    }
+    
+    .test-log .info {
+      color: #60a5fa;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #4a4a4a;
+    }
+    
+    tr:hover {
+      background: #f9fafb;
+    }
+    
+    .chart-container {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 4px;
+    }
+    
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      height: 200px;
+      gap: 0.5rem;
+      padding: 1rem 0;
+    }
+    
+    .bar {
+      flex: 1;
+      background: #0066cc;
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      min-height: 2px;
+    }
+    
+    .bar-label {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    
+    .bar-value {
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚡ Search Performance Test Suite</h1>
+  <p>Performance testing for Requirement 1.4 (Response time < 500ms)</p>
+
+  <!-- Test 1: Search Response Time -->
+  <div class="test-section">
+    <h2>Test 1: Search Response Time (Req 1.4)</h2>
+    <p>Measure search execution time for various queries</p>
+    
+    <div id="response-time-metrics"></div>
+    
+    <div class="chart-container">
+      <h3>Response Time Distribution</h3>
+      <div class="bar-chart" id="response-time-chart"></div>
+    </div>
+    
+    <button onclick="runResponseTimeTests()">Run Response Time Tests</button>
+    <button onclick="runResponseTimeTests(true)">Run Extended Tests (100 queries)</button>
+  </div>
+
+  <!-- Test 2: Index File Size -->
+  <div class="test-section">
+    <h2>Test 2: Index File Size (Req 1.4)</h2>
+    <p>Verify that search-index.json is under 500KB</p>
+    
+    <div id="file-size-metrics"></div>
+    <button onclick="runFileSizeTests()">Check Index File Size</button>
+  </div>
+
+  <!-- Test 3: Large Result Sets -->
+  <div class="test-section">
+    <h2>Test 3: Large Result Sets Performance</h2>
+    <p>Test performance with queries that return many results</p>
+    
+    <div id="large-results-metrics"></div>
+    
+    <table id="large-results-table" style="display: none;">
+      <thead>
+        <tr>
+          <th>Query</th>
+          <th>Results Count</th>
+          <th>Response Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    
+    <button onclick="runLargeResultsTests()">Run Large Results Tests</button>
+  </div>
+
+  <!-- Test 4: Memory Leak Detection -->
+  <div class="test-section">
+    <h2>Test 4: Memory Leak Detection</h2>
+    <p>Check for memory leaks during repeated searches</p>
+    
+    <div id="memory-metrics"></div>
+    
+    <div class="progress-bar" id="memory-progress-bar" style="display: none;">
+      <div class="progress-fill" id="memory-progress-fill"></div>
+    </div>
+    
+    <div class="test-log" id="memory-test-log" style="display: none;"></div>
+    
+    <button onclick="runMemoryLeakTests()">Run Memory Leak Tests (50 iterations)</button>
+  </div>
+
+  <!-- Test 5: Concurrent Search Performance -->
+  <div class="test-section">
+    <h2>Test 5: Concurrent Search Performance</h2>
+    <p>Test performance when multiple searches are triggered rapidly</p>
+    
+    <div id="concurrent-metrics"></div>
+    <button onclick="runConcurrentTests()">Run Concurrent Tests</button>
+  </div>
+
+  <!-- Test 6: Index Loading Performance -->
+  <div class="test-section">
+    <h2>Test 6: Index Loading Performance</h2>
+    <p>Measure time to load and initialize search index</p>
+    
+    <div id="loading-metrics"></div>
+    <button onclick="runLoadingTests()">Run Loading Tests</button>
+  </div>
+
+  <!-- Summary -->
+  <div class="test-section">
+    <h2>Performance Summary</h2>
+    <button onclick="runAllPerformanceTests()" style="background: #10b981; font-size: 1.1rem; padding: 1rem 2rem;">
+      ▶ Run Complete Performance Suite
+    </button>
+    <div id="performance-summary" style="margin-top: 1rem;"></div>
+  </div>
+
+  <script type="module">
+    import { SearchEngine } from '/src/scripts/search-engine.js';
+
+    window.SearchEngine = SearchEngine;
+    window.performanceResults = {
+      responseTime: [],
+      fileSize: 0,
+      largeResults: [],
+      memoryUsage: [],
+      concurrent: [],
+      loading: 0
+    };
+
+    // Utility function to format bytes
+    window.formatBytes = function(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    // Utility function to format time
+    window.formatTime = function(ms) {
+      if (ms < 1) return (ms * 1000).toFixed(2) + ' μs';
+      if (ms < 1000) return ms.toFixed(2) + ' ms';
+      return (ms / 1000).toFixed(2) + ' s';
+    };
+
+    // Utility function to get metric class
+    window.getMetricClass = function(value, threshold, reverse = false) {
+      if (reverse) {
+        return value <= threshold ? 'good' : value <= threshold * 1.5 ? 'warning' : 'bad';
+      }
+      return value >= threshold ? 'good' : value >= threshold * 0.7 ? 'warning' : 'bad';
+    };
+  </script>
+
+  <script>
+    // Test 1: Response Time
+    async function runResponseTimeTests(extended = false) {
+      const container = document.getElementById('response-time-metrics');
+      container.innerHTML = '<p>Running response time tests...</p>';
+      
+      const searchEngine = new window.SearchEngine();
+      await searchEngine.loadIndex();
+      
+      const testQueries = [
+        'projeto',
+        'pesquisa',
+        'publicação',
+        'orientação',
+        'desenvolvimento',
+        'software',
+        'engenharia',
+        'sistema',
+        'dados',
+        'análise'
+      ];
+      
+      const iterations = extended ? 100 : 10;
+      const times = [];
+      
+      for (let i = 0; i < iterations; i++) {
+        const query = testQueries[i % testQueries.length];
+        const start = performance.now();
+        await searchEngine.search(query);
+        const end = performance.now();
+        times.push(end - start);
+      }
+      
+      window.performanceResults.responseTime = times;
+      
+      // Calculate statistics
+      const avg = times.reduce((a, b) => a + b, 0) / times.length;
+      const min = Math.min(...times);
+      const max = Math.max(...times);
+      const median = times.sort((a, b) => a - b)[Math.floor(times.length / 2)];
+      const p95 = times[Math.floor(times.length * 0.95)];
+      
+      const avgClass = window.getMetricClass(avg, 500, true);
+      const p95Class = window.getMetricClass(p95, 500, true);
+      
+      container.innerHTML = `
+        <div class="metric-card ${avgClass}">
+          <div class="metric-label">Average Response Time</div>
+          <div class="metric-value">${window.formatTime(avg)}</div>
+          <div class="metric-description">
+            Target: < 500ms | Tested: ${iterations} queries
+          </div>
+        </div>
+        
+        <div class="metric-card ${p95Class}">
+          <div class="metric-label">95th Percentile</div>
+          <div class="metric-value">${window.formatTime(p95)}</div>
+          <div class="metric-description">
+            95% of searches complete within this time
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-label">Min / Max</div>
+          <div class="metric-value">${window.formatTime(min)} / ${window.formatTime(max)}</div>
+          <div class="metric-description">
+            Fastest and slowest search times
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-label">Median</div>
+          <div class="metric-value">${window.formatTime(median)}</div>
+          <div class="metric-description">
+            Middle value of all measurements
+          </div>
+        </div>
+      `;
+      
+      // Update chart
+      updateResponseTimeChart(times);
+    }
+
+    function updateResponseTimeChart(times) {
+      const chart = document.getElementById('response-time-chart');
+      
+      // Create buckets
+      const buckets = [
+        { label: '0-100ms', min: 0, max: 100, count: 0 },
+        { label: '100-200ms', min: 100, max: 200, count: 0 },
+        { label: '200-300ms', min: 200, max: 300, count: 0 },
+        { label: '300-400ms', min: 300, max: 400, count: 0 },
+        { label: '400-500ms', min: 400, max: 500, count: 0 },
+        { label: '>500ms', min: 500, max: Infinity, count: 0 }
+      ];
+      
+      times.forEach(time => {
+        const bucket = buckets.find(b => time >= b.min && time < b.max);
+        if (bucket) bucket.count++;
+      });
+      
+      const maxCount = Math.max(...buckets.map(b => b.count));
+      
+      chart.innerHTML = buckets.map(bucket => {
+        const height = maxCount > 0 ? (bucket.count / maxCount) * 100 : 0;
+        return `
+          <div class="bar" style="height: ${height}%">
+            <div class="bar-value">${bucket.count}</div>
+            <div class="bar-label">${bucket.label}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Test 2: File Size
+    async function runFileSizeTests() {
+      const container = document.getElementById('file-size-metrics');
+      container.innerHTML = '<p>Checking index file size...</p>';
+      
+      try {
+        const response = await fetch('/search-index.json');
+        const blob = await response.blob();
+        const sizeBytes = blob.size;
+        const sizeKB = sizeBytes / 1024;
+        
+        window.performanceResults.fileSize = sizeBytes;
+        
+        const sizeClass = window.getMetricClass(sizeKB, 500, true);
+        
+        container.innerHTML = `
+          <div class="metric-card ${sizeClass}">
+            <div class="metric-label">Index File Size</div>
+            <div class="metric-value">${window.formatBytes(sizeBytes)}</div>
+            <div class="metric-description">
+              Target: < 500KB | Actual: ${sizeKB.toFixed(2)} KB
+              ${sizeKB < 500 ? '✓ Within target' : '✗ Exceeds target'}
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-label">Compression Potential</div>
+            <div class="metric-value">${((1 - sizeKB / 500) * 100).toFixed(1)}%</div>
+            <div class="metric-description">
+              ${sizeKB < 500 ? 'Room for growth' : 'Consider optimization'}
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        container.innerHTML = `
+          <div class="metric-card bad">
+            <div class="metric-label">Error</div>
+            <div class="metric-value">Failed</div>
+            <div class="metric-description">
+              Could not load search-index.json: ${error.message}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Test 3: Large Results
+    async function runLargeResultsTests() {
+      const container = document.getElementById('large-results-metrics');
+      const table = document.getElementById('large-results-table');
+      const tbody = table.querySelector('tbody');
+      
+      container.innerHTML = '<p>Running large result set tests...</p>';
+      tbody.innerHTML = '';
+      
+      const searchEngine = new window.SearchEngine();
+      await searchEngine.loadIndex();
+      
+      // Queries likely to return many results
+      const testQueries = ['a', 'e', 'o', 'projeto', 'pesquisa', 'de', 'da', 'do'];
+      const results = [];
+      
+      for (const query of testQueries) {
+        const start = performance.now();
+        const searchResults = await searchEngine.search(query);
+        const end = performance.now();
+        const time = end - start;
+        
+        results.push({
+          query,
+          count: searchResults.length,
+          time
+        });
+        
+        const status = time < 500 ? '✓ Pass' : '✗ Fail';
+        const statusClass = time < 500 ? 'good' : 'bad';
+        
+        tbody.innerHTML += `
+          <tr>
+            <td><code>${query}</code></td>
+            <td>${searchResults.length}</td>
+            <td>${window.formatTime(time)}</td>
+            <td style="color: ${time < 500 ? '#10b981' : '#ef4444'}">${status}</td>
+          </tr>
+        `;
+      }
+      
+      window.performanceResults.largeResults = results;
+      
+      const avgTime = results.reduce((a, b) => a + b.time, 0) / results.length;
+      const maxResults = Math.max(...results.map(r => r.count));
+      const avgClass = window.getMetricClass(avgTime, 500, true);
+      
+      container.innerHTML = `
+        <div class="metric-card ${avgClass}">
+          <div class="metric-label">Average Time (Large Results)</div>
+          <div class="metric-value">${window.formatTime(avgTime)}</div>
+          <div class="metric-description">
+            Max results returned: ${maxResults} | Target: < 500ms
+          </div>
+        </div>
+      `;
+      
+      table.style.display = 'table';
+    }
+
+    // Test 4: Memory Leaks
+    async function runMemoryLeakTests() {
+      const container = document.getElementById('memory-metrics');
+      const progressBar = document.getElementById('memory-progress-bar');
+      const progressFill = document.getElementById('memory-progress-fill');
+      const log = document.getElementById('memory-test-log');
+      
+      container.innerHTML = '<p>Running memory leak tests...</p>';
+      progressBar.style.display = 'block';
+      log.style.display = 'block';
+      log.innerHTML = '';
+      
+      const searchEngine = new window.SearchEngine();
+      await searchEngine.loadIndex();
+      
+      const iterations = 50;
+      const memorySnapshots = [];
+      const queries = ['projeto', 'pesquisa', 'publicação', 'orientação', 'desenvolvimento'];
+      
+      function addLog(message, type = 'info') {
+        log.innerHTML += `<div class="${type}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+        log.scrollTop = log.scrollHeight;
+      }
+      
+      addLog('Starting memory leak test...', 'info');
+      
+      for (let i = 0; i < iterations; i++) {
+        const query = queries[i % queries.length];
+        await searchEngine.search(query);
+        
+        if (performance.memory) {
+          memorySnapshots.push({
+            iteration: i + 1,
+            usedJSHeapSize: performance.memory.usedJSHeapSize,
+            totalJSHeapSize: performance.memory.totalJSHeapSize
+          });
+        }
+        
+        progressFill.style.width = ((i + 1) / iterations * 100) + '%';
+        
+        if ((i + 1) % 10 === 0) {
+          addLog(`Completed ${i + 1}/${iterations} iterations`, 'info');
+        }
+      }
+      
+      window.performanceResults.memoryUsage = memorySnapshots;
+      
+      if (memorySnapshots.length > 0) {
+        const firstSnapshot = memorySnapshots[0];
+        const lastSnapshot = memorySnapshots[memorySnapshots.length - 1];
+        const memoryGrowth = lastSnapshot.usedJSHeapSize - firstSnapshot.usedJSHeapSize;
+        const growthPercent = (memoryGrowth / firstSnapshot.usedJSHeapSize) * 100;
+        
+        const hasLeak = growthPercent > 50; // More than 50% growth indicates potential leak
+        const leakClass = hasLeak ? 'bad' : growthPercent > 20 ? 'warning' : 'good';
+        
+        addLog(`Memory growth: ${window.formatBytes(memoryGrowth)} (${growthPercent.toFixed(1)}%)`, 
+                hasLeak ? 'error' : 'info');
+        addLog('Test completed', 'info');
+        
+        container.innerHTML = `
+          <div class="metric-card ${leakClass}">
+            <div class="metric-label">Memory Growth</div>
+            <div class="metric-value">${window.formatBytes(memoryGrowth)}</div>
+            <div class="metric-description">
+              ${growthPercent.toFixed(1)}% increase over ${iterations} searches
+              ${hasLeak ? '⚠ Potential memory leak detected' : '✓ No significant leak detected'}
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-label">Initial / Final Heap Size</div>
+            <div class="metric-value">
+              ${window.formatBytes(firstSnapshot.usedJSHeapSize)} / 
+              ${window.formatBytes(lastSnapshot.usedJSHeapSize)}
+            </div>
+            <div class="metric-description">
+              JavaScript heap usage at start and end of test
+            </div>
+          </div>
+        `;
+      } else {
+        addLog('Memory API not available in this browser', 'warning');
+        container.innerHTML = `
+          <div class="metric-card warning">
+            <div class="metric-label">Memory Monitoring</div>
+            <div class="metric-value">Not Available</div>
+            <div class="metric-description">
+              performance.memory API not supported in this browser
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Test 5: Concurrent Searches
+    async function runConcurrentTests() {
+      const container = document.getElementById('concurrent-metrics');
+      container.innerHTML = '<p>Running concurrent search tests...</p>';
+      
+      const searchEngine = new window.SearchEngine();
+      await searchEngine.loadIndex();
+      
+      const queries = ['projeto', 'pesquisa', 'publicação', 'orientação', 'desenvolvimento'];
+      const concurrentCount = 10;
+      
+      const start = performance.now();
+      const promises = [];
+      
+      for (let i = 0; i < concurrentCount; i++) {
+        const query = queries[i % queries.length];
+        promises.push(searchEngine.search(query));
+      }
+      
+      await Promise.all(promises);
+      const end = performance.now();
+      const totalTime = end - start;
+      const avgTime = totalTime / concurrentCount;
+      
+      window.performanceResults.concurrent.push({ totalTime, avgTime, count: concurrentCount });
+      
+      const avgClass = window.getMetricClass(avgTime, 500, true);
+      
+      container.innerHTML = `
+        <div class="metric-card ${avgClass}">
+          <div class="metric-label">Average Time (Concurrent)</div>
+          <div class="metric-value">${window.formatTime(avgTime)}</div>
+          <div class="metric-description">
+            ${concurrentCount} searches executed concurrently
+          </div>
+        </div>
+        
+        <div class="metric-card">
+          <div class="metric-label">Total Execution Time</div>
+          <div class="metric-value">${window.formatTime(totalTime)}</div>
+          <div class="metric-description">
+            Time to complete all ${concurrentCount} searches
+          </div>
+        </div>
+      `;
+    }
+
+    // Test 6: Loading Performance
+    async function runLoadingTests() {
+      const container = document.getElementById('loading-metrics');
+      container.innerHTML = '<p>Running index loading tests...</p>';
+      
+      // Clear any cached instances
+      const searchEngine = new window.SearchEngine();
+      
+      const start = performance.now();
+      await searchEngine.loadIndex();
+      const end = performance.now();
+      const loadTime = end - start;
+      
+      window.performanceResults.loading = loadTime;
+      
+      const loadClass = window.getMetricClass(loadTime, 1000, true);
+      
+      container.innerHTML = `
+        <div class="metric-card ${loadClass}">
+          <div class="metric-label">Index Load Time</div>
+          <div class="metric-value">${window.formatTime(loadTime)}</div>
+          <div class="metric-description">
+            Time to fetch and initialize search index
+            ${loadTime < 1000 ? '✓ Fast loading' : '⚠ Consider optimization'}
+          </div>
+        </div>
+      `;
+    }
+
+    // Run all tests
+    async function runAllPerformanceTests() {
+      const summary = document.getElementById('performance-summary');
+      summary.innerHTML = '<p><strong>Running complete performance suite...</strong></p>';
+      
+      await runResponseTimeTests();
+      await runFileSizeTests();
+      await runLargeResultsTests();
+      await runMemoryLeakTests();
+      await runConcurrentTests();
+      await runLoadingTests();
+      
+      const results = window.performanceResults;
+      const avgResponseTime = results.responseTime.reduce((a, b) => a + b, 0) / results.responseTime.length;
+      const fileSize = results.fileSize / 1024;
+      
+      const allPassed = avgResponseTime < 500 && fileSize < 500;
+      const summaryClass = allPassed ? 'good' : 'warning';
+      
+      summary.innerHTML = `
+        <div class="metric-card ${summaryClass}">
+          <h3>Performance Test Summary</h3>
+          <p><strong>Average Response Time:</strong> ${window.formatTime(avgResponseTime)} 
+             ${avgResponseTime < 500 ? '✓' : '✗'}</p>
+          <p><strong>Index File Size:</strong> ${fileSize.toFixed(2)} KB 
+             ${fileSize < 500 ? '✓' : '✗'}</p>
+          <p><strong>Overall Status:</strong> 
+             ${allPassed ? '✓ All performance targets met' : '⚠ Some targets not met'}</p>
+        </div>
+      `;
+    }
+
+    // Make functions globally available
+    window.runResponseTimeTests = runResponseTimeTests;
+    window.runFileSizeTests = runFileSizeTests;
+    window.runLargeResultsTests = runLargeResultsTests;
+    window.runMemoryLeakTests = runMemoryLeakTests;
+    window.runConcurrentTests = runConcurrentTests;
+    window.runLoadingTests = runLoadingTests;
+    window.runAllPerformanceTests = runAllPerformanceTests;
+  </script>
+</body>
+</html>

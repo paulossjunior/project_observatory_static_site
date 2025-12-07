@@ -16,30 +16,22 @@
       aria-label="Buscar projetos, publicações e conteúdo acadêmico"
       autocomplete="off"
       spellcheck="false"
+      tabindex="0"
     />
   </div>
   <div id="search-results" class="search-results" aria-live="polite" aria-expanded="false"></div>
 </div>
 
-<script is:inline>
-  // Simple inline test
-  console.log('Search component script loaded');
-  
-  window.addEventListener('load', () => {
-    const input = document.getElementById('search-input');
-    console.log('Window loaded, input:', input);
+<script>
+  import { SearchEngine } from '../scripts/search-engine.js';
+  import { SearchUI } from '../scripts/search-ui.js';
+
+  // Initialize search when DOM is ready
+  document.addEventListener('DOMContentLoaded', async () => {
+    const searchEngine = new SearchEngine();
+    const searchUI = new SearchUI(searchEngine);
     
-    if (input) {
-      input.addEventListener('input', (e) => {
-        console.log('INLINE: Input detected:', e.target.value);
-      });
-      
-      input.addEventListener('keydown', (e) => {
-        console.log('INLINE: Key pressed:', e.key);
-      });
-      
-      console.log('INLINE: Event listeners attached to input');
-    }
+    searchUI.init();
   });
 </script>
 
@@ -73,9 +65,9 @@
     background: white;
     color: #1a1a1a;
     transition: all 0.2s ease;
-    outline: none;
-    pointer-events: auto;
+    -webkit-user-select: text;
     user-select: text;
+    pointer-events: auto;
   }
 
   .search-input:focus {

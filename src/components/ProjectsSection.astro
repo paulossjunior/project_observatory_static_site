@@ -15,20 +15,68 @@ const sortedProjects = [...projects].sort((a, b) => {
   const yearB = parseInt(b.ano_inicio) || 0;
   return yearB - yearA;
 });
+
+// Function to clean description - remove standard Lattes text
+function cleanDescription(descArray: string[]): string[] {
+  if (!descArray || descArray.length === 0) return [];
+  
+  return descArray.map(desc => {
+    // Remove text starting with "Situação:" or similar patterns
+    let cleaned = desc.replace(/Situação:.*?(?=\.|$)/gs, '');
+    cleaned = cleaned.replace(/Natureza:.*?(?=\.|$)/gs, '');
+    cleaned = cleaned.replace(/Alunos envolvidos:.*?(?=\.|$)/gs, '');
+    cleaned = cleaned.replace(/Integrantes:.*?(?=Financiador|$)/gs, '');
+    cleaned = cleaned.replace(/Financiador\(es\):.*?(?=\.|$)/gs, '');
+    
+    // Remove extra spaces
+    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+    
+    // Remove multiple consecutive dots (2 or more) and replace with single dot
+    cleaned = cleaned.replace(/\.{2,}/g, '.');
+    
+    // Remove spaces before dots
+    cleaned = cleaned.replace(/\s+\./g, '.');
+    
+    // Ensure only one dot at the end
+    cleaned = cleaned.replace(/\.+$/, '.');
+    
+    return cleaned;
+  }).filter(desc => desc.length > 10); // Keep only meaningful descriptions
+}
+
+// Determine project status
+function getProjectStatus(anoInicio: string, anoConclusao: string): { label: string; class: string } {
+  if (!anoConclusao || anoConclusao.toLowerCase() === 'atual') {
+    return { label: 'Em andamento', class: 'status-active' };
+  }
+  return { label: 'Concluído', class: 'status-completed' };
+}
+
+// Generate section ID from title (for anchor links)
+const sectionId = 'projetos';
 ---
 
 {projects.length > 0 && (
-  <section class="projects-section">
+  <section class="projects-section" id={sectionId}>
     <h2>{title}</h2>
     <div class="projects-list">
-      {sortedProjects.map((project) => (
-        <article class="project">
-          <h3>{project.nome}</h3>
+      {sortedProjects.map((project, index) => {
+        // Generate unique ID for each project
+        const projectId = `projeto-${index}-${project.nome.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 50)}`;
+        const status = getProjectStatus(project.ano_inicio, project.ano_conclusao);
+        const cleanedDesc = cleanDescription(project.descricao || []);
+        
+        return (
+        <article class="project" id={projectId}>
+          <div class="project-header">
+            <h3>{project.nome}</h3>
+            <span class={`status-badge ${status.class}`}>{status.label}</span>
+          </div>
           <p class="period">{formatPeriod(project.ano_inicio, project.ano_conclusao)}</p>
           
-          {project.descricao && project.descricao.length > 0 && (
+          {cleanedDesc.length > 0 && (
             <div class="description">
-              {project.descricao.map((desc) => (
+              {cleanedDesc.map((desc) => (
                 <p>{desc}</p>
               ))}
             </div>
@@ -62,7 +110,8 @@ const sortedProjects = [...projects].sort((a, b) => {
             </div>
           )}
         </article>
-      ))}
+      );
+      })}
     </div>
   </section>
 )}
@@ -94,10 +143,19 @@ const sortedProjects = [...projects].sort((a, b) => {
     border-radius: 4px;
   }
 
+  .project-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
   .project h3 {
-    margin: 0 0 0.5rem 0;
+    margin: 0;
     font-size: 1.15rem;
     font-weight: 600;
+    flex: 1;
     color: #1a1a1a;
     line-height: 1.3;
   }
@@ -107,6 +165,28 @@ const sortedProjects = [...projects].sort((a, b) => {
     font-size: 0.9rem;
     color: #666;
     font-style: italic;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .status-completed {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
   }
 
   .description p {

@@ -9,31 +9,51 @@ const { info } = Astro.props;
 ---
 
 <header class="person-header">
-  <h1>{info.nome_completo}</h1>
-  
-  {info.endereco_profissional && (
-    <div class="contact-info">
-      <p class="address">{info.endereco_profissional}</p>
+  <div class="header-main">
+    <div class="header-content">
+      <h1>{info.nome_completo}</h1>
+      
+      {info.endereco_profissional && (
+        <div class="affiliation">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>{info.endereco_profissional}</span>
+        </div>
+      )}
+      
+      <div class="header-actions">
+        {info.url && (
+          <div class="link-item">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <a href={info.url} target="_blank" rel="noopener noreferrer" class="link-url">
+              {info.url}
+            </a>
+          </div>
+        )}
+        
+        {info.atualizacao_cv && (
+          <span class="last-updated">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Atualizado em {info.atualizacao_cv}
+          </span>
+        )}
+      </div>
     </div>
-  )}
-  
-  {info.url && (
-    <div class="links">
-      <a href={info.url} target="_blank" rel="noopener noreferrer" class="lattes-link">
-        Lattes CV →
-      </a>
-    </div>
-  )}
+  </div>
   
   {info.texto_resumo && (
     <div class="summary">
-      <h2>About</h2>
+      <h2>Sobre</h2>
       <p>{info.texto_resumo}</p>
     </div>
-  )}
-  
-  {info.atualizacao_cv && (
-    <p class="last-updated">Last updated: {info.atualizacao_cv}</p>
   )}
 </header>
 
@@ -44,43 +64,84 @@ const { info } = Astro.props;
     margin-bottom: 2rem;
   }
 
-  .person-header h1 {
+  .header-main {
+    margin-bottom: 2rem;
+  }
+
+  .header-content h1 {
     margin: 0 0 1rem 0;
-    font-size: 2rem;
+    font-size: 2.25rem;
     font-weight: 700;
     color: #1a1a1a;
     line-height: 1.2;
   }
 
-  .contact-info {
+  .affiliation {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
     margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border-left: 3px solid #0066cc;
+    border-radius: 4px;
   }
 
-  .contact-info .address {
-    margin: 0;
+  .affiliation svg {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+    color: #0066cc;
+  }
+
+  .affiliation span {
     font-size: 0.95rem;
     color: #4a4a4a;
     line-height: 1.6;
   }
 
-  .links {
-    margin-bottom: 1.5rem;
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
   }
 
-  .lattes-link {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    background: #0066cc;
-    color: white;
+  .link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a4a4a;
+  }
+
+  .link-item svg {
+    flex-shrink: 0;
+    color: #0066cc;
+  }
+
+  .link-url {
+    color: #0066cc;
     text-decoration: none;
-    border-radius: 4px;
     font-size: 0.9rem;
-    font-weight: 500;
-    transition: background 0.2s ease;
+    word-break: break-all;
+    transition: color 0.2s ease;
   }
 
-  .lattes-link:hover {
-    background: #0052a3;
+  .link-url:hover {
+    color: #0052a3;
+    text-decoration: underline;
+  }
+
+  .last-updated {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .last-updated svg {
+    flex-shrink: 0;
   }
 
   .summary {
@@ -101,21 +162,32 @@ const { info } = Astro.props;
     color: #333;
   }
 
-  .last-updated {
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    color: #666;
-    font-style: italic;
-  }
-
   /* Responsive design */
   @media (max-width: 768px) {
     .person-header {
       padding: 1.5rem 0;
     }
 
-    .person-header h1 {
-      font-size: 1.5rem;
+    .header-content h1 {
+      font-size: 1.75rem;
+    }
+
+    .affiliation {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .affiliation span {
+      font-size: 0.875rem;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .link-url {
+      font-size: 0.85rem;
     }
 
     .summary h2 {

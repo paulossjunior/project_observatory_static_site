@@ -16,31 +16,23 @@ export class SearchUI {
    * Initializes the search UI
    */
   init() {
-    console.log('SearchUI.init() called');
     this.searchInput = document.getElementById('search-input');
     this.searchResults = document.getElementById('search-results');
-
-    console.log('Elements:', { input: this.searchInput, results: this.searchResults });
 
     if (!this.searchInput || !this.searchResults) {
       console.error('Search elements not found');
       return;
     }
 
-    console.log('Attaching event listeners...');
     this.attachEventListeners();
-    console.log('Event listeners attached');
   }
 
   /**
    * Attaches event listeners to search elements
    */
   attachEventListeners() {
-    console.log('attachEventListeners called');
-    
     // Input event with debouncing
     this.searchInput.addEventListener('input', (e) => {
-      console.log('Input event triggered:', e.target.value);
       this.handleInput(e.target.value);
     });
 
@@ -196,8 +188,6 @@ export class SearchUI {
   closeResults() {
     this.searchResults.classList.remove('active');
     this.searchResults.setAttribute('aria-expanded', 'false');
-    this.searchInput.value = '';
-    this.lastResults = [];
     this.selectedIndex = -1;
   }
 
@@ -555,7 +545,7 @@ export class SearchUI {
         window.location.href = url;
       }
     } else {
-      // Different page navigation
+      // Different page navigation - browser will handle anchor scroll
       window.location.href = url;
     }
   }

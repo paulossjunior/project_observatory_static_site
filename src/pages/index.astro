@@ -1,6 +1,7 @@
 ---
 import PersonCard from '../components/PersonCard.astro';
 import GlobalStatsDashboard from '../components/GlobalStatsDashboard.astro';
+import Search from '../components/Search.astro';
 import { getAllPeople } from '../utils/personData';
 import { calculateGlobalStats } from '../utils/globalStats';
 
@@ -31,6 +32,8 @@ const sortedPeople = people.sort((a, b) =>
           Explore the profiles of our researchers and academics. Click on any card to view detailed information about their academic background, professional experience, and research projects.
         </p>
       </header>
+
+      <Search />
 
       <GlobalStatsDashboard stats={globalStats} />
 

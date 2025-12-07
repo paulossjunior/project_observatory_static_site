@@ -1,0 +1,273 @@
+---
+import type { PersonReference } from '../utils/researchLineData';
+
+interface Props {
+  people: PersonReference[];
+}
+
+const { people } = Astro.props;
+
+// Group people by role
+const professors = people.filter(p => p.role === 'professor');
+const students = people.filter(p => p.role === 'student');
+const collaborators = people.filter(p => p.role === 'collaborator');
+
+const roleLabels = {
+  professor: 'Professores',
+  student: 'Estudantes',
+  collaborator: 'Colaboradores'
+};
+---
+
+<section class="related-people">
+  <h3>Pesquisadores ({people.length})</h3>
+  
+  {people.length === 0 ? (
+    <p class="empty-state">Nenhum pesquisador associado a esta linha de pesquisa.</p>
+  ) : (
+    <>
+      <div class="filters">
+        <div class="filter-group">
+          <label for="filter-role">Função:</label>
+          <select id="filter-role" class="filter-select">
+            <option value="">Todos</option>
+            <option value="professor">Professores ({professors.length})</option>
+            <option value="student">Estudantes ({students.length})</option>
+            <option value="collaborator">Colaboradores ({collaborators.length})</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="people-groups">
+        {professors.length > 0 && (
+          <div class="people-group" data-role="professor">
+            <h4>
+              <span class="role-icon">👨‍🏫</span>
+              Professores ({professors.length})
+            </h4>
+            <div class="people-grid">
+              {professors.map(person => (
+                <a href={`/person/${person.id}`} class="person-card">
+                  <div class="person-name">{person.nome}</div>
+                  <div class="person-role">Professor</div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {students.length > 0 && (
+          <div class="people-group" data-role="student">
+            <h4>
+              <span class="role-icon">👨‍🎓</span>
+              Estudantes ({students.length})
+            </h4>
+            <div class="people-grid">
+              {students.map(person => (
+                <a href={`/person/${person.id}`} class="person-card">
+                  <div class="person-name">{person.nome}</div>
+                  <div class="person-role">Estudante</div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {collaborators.length > 0 && (
+          <div class="people-group" data-role="collaborator">
+            <h4>
+              <span class="role-icon">🤝</span>
+              Colaboradores ({collaborators.length})
+            </h4>
+            <div class="people-grid">
+              {collaborators.map(person => (
+                <a href={`/person/${person.id}`} class="person-card">
+                  <div class="person-name">{person.nome}</div>
+                  <div class="person-role">Colaborador</div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <p class="result-count">
+        Mostrando <span id="people-visible-count">{people.length}</span> de {people.length} pesquisadores
+      </p>
+    </>
+  )}
+</section>
+
+<script>
+  // Filter functionality for people
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterSelect = document.getElementById('filter-role') as HTMLSelectElement;
+    const peopleGroups = document.querySelectorAll('.people-group');
+    const visibleCount = document.getElementById('people-visible-count');
+    
+    if (!filterSelect || !peopleGroups.length) return;
+    
+    filterSelect.addEventListener('change', () => {
+      const selectedRole = filterSelect.value;
+      let totalVisible = 0;
+      
+      peopleGroups.forEach(group => {
+        const groupEl = group as HTMLElement;
+        const role = groupEl.dataset.role;
+        
+        if (!selectedRole || role === selectedRole) {
+          groupEl.style.display = '';
+          const cards = groupEl.querySelectorAll('.person-card');
+          totalVisible += cards.length;
+        } else {
+          groupEl.style.display = 'none';
+        }
+      });
+      
+      if (visibleCount) {
+        visibleCount.textContent = totalVisible.toString();
+      }
+    });
+  });
+</script>
+
+<style>
+  .related-people {
+    margin: 2rem 0;
+  }
+
+  .related-people h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .filter-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  .filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    cursor: pointer;
+  }
+
+  .filter-select:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 0;
+  }
+
+  .people-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .people-group h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .role-icon {
+    font-size: 1.25rem;
+  }
+
+  .people-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .person-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .person-card:hover {
+    border-color: #0066cc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .person-card:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+  }
+
+  .person-name {
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+  }
+
+  .person-role {
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .result-count {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .result-count span {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  @media (max-width: 768px) {
+    .people-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .people-group h4 {
+      font-size: 1rem;
+    }
+
+    .person-card {
+      padding: 0.875rem;
+    }
+  }
+</style>

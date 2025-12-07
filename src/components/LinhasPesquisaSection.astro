@@ -1,25 +1,160 @@
 ---
-import type { LinhaPesquisa } from '../utils/personData';
+import type { LinhaPesquisa, PersonData } from '../utils/personData';
+import ResearchLineBadge from './ResearchLineBadge.astro';
 
 interface Props {
   linhas: LinhaPesquisa[];
+  personData?: PersonData;
+  personId?: string;
 }
 
-const { linhas } = Astro.props;
+const { linhas, personData, personId } = Astro.props;
+
+// Sort research lines alphabetically
+const sortedLinhas = [...linhas].sort((a, b) => 
+  a.nome.localeCompare(b.nome, 'pt-BR')
+);
+
+// Function to get associated items for each research line
+function getAssociatedItems(linhaName: string) {
+  if (!personData) return { projetos: [], artigos: [], orientacoes: [] };
+  
+  const lowerLinhaName = linhaName.toLowerCase();
+  
+  // Get projects
+  const allProjects = [
+    ...(personData.projetos_pesquisa || []),
+    ...(personData.projetos_extensao || []),
+    ...(personData.projetos_desenvolvimento || [])
+  ];
+  const projetos = allProjects.filter(p => 
+    p.nome?.toLowerCase().includes(lowerLinhaName) ||
+    p.descricao?.some(d => d.toLowerCase().includes(lowerLinhaName))
+  );
+  
+  // Get articles
+  const artigos = (personData.producao_bibliografica?.artigos_periodicos || []).filter(a =>
+    a.titulo?.toLowerCase().includes(lowerLinhaName)
+  );
+  
+  // Get orientations
+  const allOrientacoes = [
+    ...(personData.orientacoes?.em_andamento?.doutorado || []),
+    ...(personData.orientacoes?.em_andamento?.mestrado || []),
+    ...(personData.orientacoes?.em_andamento?.iniciacao_cientifica || []),
+    ...(personData.orientacoes?.concluidas?.doutorado || []),
+    ...(personData.orientacoes?.concluidas?.mestrado || []),
+    ...(personData.orientacoes?.concluidas?.iniciacao_cientifica || [])
+  ];
+  const orientacoes = allOrientacoes.filter(o =>
+    o.titulo?.toLowerCase().includes(lowerLinhaName)
+  );
+  
+  return { projetos, artigos, orientacoes };
+}
 ---
 
 {linhas && linhas.length > 0 && (
   <section class="linhas-section" id="linhas">
     <h2>Linhas de Pesquisa</h2>
     <div class="linhas-list">
-      {linhas.map((linha) => (
+      {sortedLinhas.map((linha, index) => {
+        const items = getAssociatedItems(linha.nome);
+        const totalItems = items.projetos.length + items.artigos.length + items.orientacoes.length;
+        const linhaId = `linha-${index}`;
+        // Generate research line ID from name
+        const researchLineId = linha.id || linha.nome
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .trim()
+          .replace(/\s+/g, '-');
+        
+        return (
         <article class="linha">
-          <h3>{linha.nome}</h3>
+          <div class="linha-header">
+            <h3>
+              <a href={`/research-line/${researchLineId}`} class="linha-link">
+                {linha.nome}
+              </a>
+            </h3>
+            <div class="linha-actions">
+              {totalItems > 0 && (
+                <div class="linha-stats">
+                  {items.projetos.length > 0 && (
+                    <span class="stat-badge stat-projetos" title="Projetos">
+                      📊 {items.projetos.length}
+                    </span>
+                  )}
+                  {items.artigos.length > 0 && (
+                    <span class="stat-badge stat-artigos" title="Artigos">
+                      📄 {items.artigos.length}
+                    </span>
+                  )}
+                  {items.orientacoes.length > 0 && (
+                    <span class="stat-badge stat-orientacoes" title="Orientações">
+                      👥 {items.orientacoes.length}
+                    </span>
+                  )}
+                </div>
+              )}
+              {totalItems > 0 && (
+                <button 
+                  class="expand-button" 
+                  onclick={`toggleLinhaDetails('${linhaId}')`}
+                  aria-label="Expandir detalhes"
+                  aria-expanded="false"
+                  id={`btn-${linhaId}`}
+                >
+                  <span class="expand-icon" id={`icon-${linhaId}`}>▶</span>
+                </button>
+              )}
+            </div>
+          </div>
           {linha.objetivo && (
             <p class="objetivo">{linha.objetivo}</p>
           )}
+          
+          {totalItems > 0 && (
+            <div class="linha-details" id={linhaId} style="display: none;">
+              {items.projetos.length > 0 && (
+                <div class="related-section">
+                  <h4>📊 Projetos Relacionados ({items.projetos.length})</h4>
+                  <ul>
+                    {items.projetos.map(p => (
+                      <li>{p.nome} <span class="year">({p.ano_inicio})</span></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {items.artigos.length > 0 && (
+                <div class="related-section">
+                  <h4>📄 Artigos Relacionados ({items.artigos.length})</h4>
+                  <ul>
+                    {items.artigos.map(a => (
+                      <li>{a.titulo} <span class="year">({a.ano})</span></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {items.orientacoes.length > 0 && (
+                <div class="related-section">
+                  <h4>👥 Orientações Relacionadas ({items.orientacoes.length})</h4>
+                  <ul>
+                    {items.orientacoes.map(o => (
+                      <li>{o.orientando} - {o.titulo} <span class="year">({o.ano_inicio})</span></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </article>
-      ))}
+      );
+      })}
     </div>
   </section>
 )}
@@ -45,17 +180,109 @@ const { linhas } = Astro.props;
   }
 
   .linha {
-    padding: 1rem;
+    padding: 1.25rem;
     background: #f8f9fa;
     border-left: 4px solid #ffc107;
     border-radius: 4px;
   }
 
+  .linha-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
   .linha h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1rem;
+    margin: 0;
+    font-size: 1.05rem;
     font-weight: 600;
+    flex: 1;
+  }
+
+  .linha-link {
     color: #1a1a1a;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .linha-link:hover {
+    color: #0066cc;
+    text-decoration: underline;
+  }
+
+  .linha-link:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .linha-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .expand-button {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    color: #6b7280;
+    transition: color 0.2s ease;
+  }
+
+  .expand-button:hover {
+    color: #0066cc;
+  }
+
+  .expand-button:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .expand-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .linha-stats {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .stat-projetos {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+  }
+
+  .stat-artigos {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+  }
+
+  .stat-orientacoes {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
   }
 
   .linha .objetivo {
@@ -71,11 +298,30 @@ const { linhas } = Astro.props;
     }
 
     .linha {
-      padding: 0.875rem;
+      padding: 1rem;
+    }
+
+    .linha-header {
+      flex-wrap: wrap;
     }
 
     .linha h3 {
       font-size: 0.95rem;
+      flex-basis: 100%;
+    }
+
+    .linha-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .linha-stats {
+      flex: 1;
+    }
+
+    .stat-badge {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
     }
 
     .linha .objetivo {
@@ -83,3 +329,25 @@ const { linhas } = Astro.props;
     }
   }
 </style>
+
+<script>
+  // Toggle research line details
+  function toggleLinhaDetails(linhaId: string) {
+    const details = document.getElementById(linhaId);
+    const icon = document.getElementById(`icon-${linhaId}`);
+    const button = document.getElementById(`btn-${linhaId}`);
+    
+    if (details && icon) {
+      const isHidden = details.style.display === 'none';
+      details.style.display = isHidden ? 'block' : 'none';
+      icon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+      
+      if (button) {
+        button.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+      }
+    }
+  }
+
+  // Make function available globally
+  (window as any).toggleLinhaDetails = toggleLinhaDetails;
+</script>

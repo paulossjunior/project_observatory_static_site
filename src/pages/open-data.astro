@@ -1,0 +1,642 @@
+---
+import { readdir } from 'node:fs/promises';
+import { join } from 'node:path';
+
+// Get list of JSON files
+const sourceDir = join(process.cwd(), 'source');
+let jsonFiles: string[] = [];
+
+try {
+  const files = await readdir(sourceDir);
+  jsonFiles = files.filter(file => file.endsWith('.json')).sort();
+} catch (error) {
+  console.error('Error reading source directory:', error);
+}
+---
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dados Abertos - Academic Observatory</title>
+    <meta name="description" content="Acesse os dados abertos do observatório acadêmico em formato JSON" />
+  </head>
+  <body>
+    <nav class="breadcrumb">
+      <a href="/" class="breadcrumb-link">Home</a>
+      <span class="breadcrumb-separator">/</span>
+      <span class="breadcrumb-current">Dados Abertos</span>
+    </nav>
+
+    <main>
+      <header class="page-header">
+        <h1>📊 Dados Abertos</h1>
+        <p class="intro">
+          Acesse os dados completos do observatório acadêmico em formato JSON. 
+          Estes dados são disponibilizados publicamente para promover transparência, 
+          facilitar análises independentes e fomentar a pesquisa colaborativa.
+        </p>
+      </header>
+
+      <section class="info-section">
+        <h2>🎯 Por que Dados Abertos?</h2>
+        <div class="benefits-grid">
+          <div class="benefit-card">
+            <div class="benefit-icon">🔍</div>
+            <h3>Transparência</h3>
+            <p>Promovemos a transparência acadêmica ao disponibilizar informações completas sobre pesquisadores, projetos e publicações.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">📈</div>
+            <h3>Análise de Dados</h3>
+            <p>Pesquisadores e analistas podem realizar estudos independentes sobre produção científica, colaborações e tendências.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🤝</div>
+            <h3>Colaboração</h3>
+            <p>Facilita a identificação de oportunidades de colaboração e o mapeamento de redes de pesquisa.</p>
+          </div>
+          <div class="benefit-card">
+            <div class="benefit-icon">🔄</div>
+            <h3>Reutilização</h3>
+            <p>Os dados podem ser integrados em outras plataformas, ferramentas de análise e sistemas de informação.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="structure-section">
+        <h2>📋 Estrutura dos Dados</h2>
+        <p>Cada arquivo JSON contém informações completas sobre um pesquisador, organizadas nas seguintes seções:</p>
+        
+        <div class="structure-list">
+          <div class="structure-item">
+            <h3>👤 Informações Pessoais</h3>
+            <p>Nome completo, afiliação institucional, endereço profissional, link para Lattes e resumo do currículo.</p>
+            <code>informacoes_pessoais</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>🎓 Formação Acadêmica</h3>
+            <p>Graduação, mestrado, doutorado e pós-doutorado, incluindo instituições, anos e descrições.</p>
+            <code>formacao_academica</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>💼 Atuação Profissional</h3>
+            <p>Histórico de vínculos institucionais, cargos, períodos e regime de trabalho.</p>
+            <code>atuacao_profissional</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>🔬 Projetos de Pesquisa</h3>
+            <p>Projetos de pesquisa, extensão e desenvolvimento, com integrantes, financiadores e descrições.</p>
+            <code>projetos_pesquisa, projetos_extensao, projetos_desenvolvimento</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>🎯 Áreas de Atuação</h3>
+            <p>Grande área, área, subárea e especialidade de atuação do pesquisador.</p>
+            <code>areas_de_atuacao</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>🧪 Linhas de Pesquisa</h3>
+            <p>Linhas de pesquisa com identificadores únicos, nomes e objetivos.</p>
+            <code>linhas_de_pesquisa</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>📚 Produção Bibliográfica</h3>
+            <p>Artigos em periódicos, livros, capítulos de livros, trabalhos em congressos e outras produções.</p>
+            <code>producao_bibliografica</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>👨‍🎓 Orientações</h3>
+            <p>Orientações de mestrado, doutorado, iniciação científica e TCC, em andamento e concluídas.</p>
+            <code>orientacoes</code>
+          </div>
+
+          <div class="structure-item">
+            <h3>🏛️ Bancas</h3>
+            <p>Participações em bancas de mestrado, doutorado, qualificação e graduação.</p>
+            <code>bancas</code>
+          </div>
+        </div>
+      </section>
+
+      <section class="example-section">
+        <h2>💡 Exemplo de Estrutura</h2>
+        <pre><code>{`{
+  "informacoes_pessoais": {
+    "id_lattes": "1234567890123456",
+    "nome_completo": "Nome do Pesquisador",
+    "nome_citacoes": "SOBRENOME, Nome",
+    "endereco_profissional": "Instituição, Endereço...",
+    "url": "http://lattes.cnpq.br/...",
+    "texto_resumo": "Descrição do perfil..."
+  },
+  "linhas_de_pesquisa": [
+    {
+      "id": "inteligencia-artificial",
+      "nome": "Inteligência Artificial",
+      "objetivo": "Pesquisa em IA e ML..."
+    }
+  ],
+  "projetos_pesquisa": [
+    {
+      "nome": "Projeto Exemplo",
+      "ano_inicio": "2020",
+      "ano_conclusao": "2023",
+      "descricao": ["Descrição do projeto..."],
+      "integrantes": [...],
+      "financiadores": [...]
+    }
+  ],
+  "producao_bibliografica": {
+    "artigos_periodicos": [...],
+    "livros_publicados": [...],
+    "capitulos_livros": [...]
+  }
+}`}</code></pre>
+      </section>
+
+      <section class="download-section">
+        <h2>⬇️ Download dos Dados</h2>
+        <p class="download-intro">
+          Clique nos links abaixo para baixar os arquivos JSON individuais de cada pesquisador:
+        </p>
+        
+        <div class="files-grid">
+          {jsonFiles.map(file => {
+            const fileName = file.replace('.json', '');
+            const parts = fileName.split('_');
+            const displayName = parts.length >= 2 ? parts.slice(1, -1).join(' ').replace(/-/g, ' ') : fileName;
+            
+            return (
+              <a href={`/source/${file}`} download class="file-card">
+                <div class="file-icon">📄</div>
+                <div class="file-info">
+                  <div class="file-name">{displayName}</div>
+                  <div class="file-meta">{file}</div>
+                </div>
+                <div class="download-icon">⬇️</div>
+              </a>
+            );
+          })}
+        </div>
+
+        <div class="bulk-download">
+          <h3>📦 Download em Massa</h3>
+          <p>Para baixar todos os arquivos de uma vez, você pode clonar o repositório do projeto:</p>
+          <pre><code>git clone [URL_DO_REPOSITORIO]</code></pre>
+          <p>Os arquivos JSON estão localizados no diretório <code>/source</code>.</p>
+        </div>
+      </section>
+
+      <section class="usage-section">
+        <h2>🛠️ Como Usar os Dados</h2>
+        <div class="usage-examples">
+          <div class="usage-card">
+            <h3>Python</h3>
+            <pre><code>{`import json
+
+with open('arquivo.json', 'r', encoding='utf-8') as f:
+    data = json.load(f)
+    
+# Acessar informações
+nome = data['informacoes_pessoais']['nome_completo']
+projetos = data['projetos_pesquisa']`}</code></pre>
+          </div>
+
+          <div class="usage-card">
+            <h3>JavaScript/Node.js</h3>
+            <pre><code>{`const fs = require('fs');
+
+const data = JSON.parse(
+  fs.readFileSync('arquivo.json', 'utf-8')
+);
+
+// Acessar informações
+const nome = data.informacoes_pessoais.nome_completo;
+const projetos = data.projetos_pesquisa;`}</code></pre>
+          </div>
+
+          <div class="usage-card">
+            <h3>R</h3>
+            <pre><code>{`library(jsonlite)
+
+data <- fromJSON('arquivo.json')
+
+# Acessar informações
+nome <- data$informacoes_pessoais$nome_completo
+projetos <- data$projetos_pesquisa`}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="license-section">
+        <h2>📜 Licença e Uso</h2>
+        <p>
+          Os dados são disponibilizados para uso acadêmico e de pesquisa. 
+          Ao utilizar estes dados, pedimos que cite a fonte apropriadamente.
+        </p>
+        <p>
+          <strong>Citação sugerida:</strong><br>
+          Academic Observatory. Dados Abertos do Observatório Acadêmico. 
+          Disponível em: [URL do site]. Acesso em: [data].
+        </p>
+      </section>
+
+      <div class="back-link">
+        <a href="/" class="btn-primary">← Voltar ao Início</a>
+      </div>
+    </main>
+  </body>
+</html>
+
+<style>
+  :root {
+    --color-primary: #0066cc;
+    --color-text: #1a1a1a;
+    --color-text-light: #4a4a4a;
+    --color-text-muted: #6b7280;
+    --color-border: #e5e7eb;
+    --color-bg: #ffffff;
+    --color-bg-alt: #f8f9fa;
+    --color-accent: #ffc107;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+  }
+
+  .breadcrumb {
+    background: var(--color-bg-alt);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .breadcrumb-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+  }
+
+  .breadcrumb-link:hover {
+    color: #0052a3;
+    text-decoration: underline;
+  }
+
+  .breadcrumb-separator {
+    color: var(--color-text-light);
+    font-size: 0.9rem;
+  }
+
+  .breadcrumb-current {
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .page-header {
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .page-header h1 {
+    margin: 0 0 1rem 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .intro {
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  section {
+    margin-bottom: 4rem;
+  }
+
+  h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid var(--color-accent);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 0.75rem 0;
+  }
+
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .benefit-card {
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .benefit-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .benefit-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .benefit-card h3 {
+    margin-bottom: 0.5rem;
+  }
+
+  .benefit-card p {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+
+  .structure-list {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .structure-item {
+    padding: 1.25rem;
+    background: var(--color-bg-alt);
+    border-left: 4px solid var(--color-primary);
+    border-radius: 4px;
+  }
+
+  .structure-item h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.05rem;
+  }
+
+  .structure-item p {
+    margin: 0 0 0.5rem 0;
+    color: var(--color-text-light);
+    font-size: 0.95rem;
+  }
+
+  .structure-item code {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    font-family: 'Courier New', monospace;
+  }
+
+  .example-section pre {
+    background: #2d2d2d;
+    color: #f8f8f2;
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-top: 1rem;
+  }
+
+  .example-section code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .download-intro {
+    font-size: 1.05rem;
+    color: var(--color-text-light);
+    margin-bottom: 2rem;
+  }
+
+  .files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .file-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: all 0.2s ease;
+  }
+
+  .file-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .file-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .file-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-name {
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: capitalize;
+  }
+
+  .file-meta {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .download-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .bulk-download {
+    padding: 2rem;
+    background: var(--color-bg-alt);
+    border-radius: 8px;
+    margin-top: 2rem;
+  }
+
+  .bulk-download h3 {
+    margin-top: 0;
+  }
+
+  .bulk-download pre {
+    background: #2d2d2d;
+    color: #f8f8f2;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+
+  .bulk-download code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+  }
+
+  .usage-examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .usage-card {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .usage-card h3 {
+    margin: 0;
+    padding: 1rem;
+    background: var(--color-bg-alt);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .usage-card pre {
+    margin: 0;
+    padding: 1rem;
+    background: #2d2d2d;
+    overflow-x: auto;
+  }
+
+  .usage-card code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #f8f8f2;
+    line-height: 1.5;
+  }
+
+  .license-section {
+    padding: 2rem;
+    background: #fff8e1;
+    border-left: 4px solid var(--color-accent);
+    border-radius: 4px;
+  }
+
+  .license-section p {
+    margin: 0.75rem 0;
+    color: var(--color-text-light);
+  }
+
+  .back-link {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 0.875rem 2rem;
+    background: var(--color-primary);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background: #0052a3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 102, 204, 0.2);
+  }
+
+  @media (max-width: 768px) {
+    main {
+      padding: 1.5rem 1rem;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+    }
+
+    .intro {
+      font-size: 1rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+    }
+
+    .benefits-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .files-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .usage-examples {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

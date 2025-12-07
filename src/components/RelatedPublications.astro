@@ -1,0 +1,377 @@
+---
+import type { PublicationReference } from '../utils/researchLineData';
+
+interface Props {
+  publications: PublicationReference[];
+}
+
+const { publications } = Astro.props;
+
+// Sort publications by year (descending)
+const sortedPublications = [...publications].sort((a, b) => b.ano.localeCompare(a.ano));
+
+// Get unique values for filters
+const publicationTypes = [...new Set(publications.map(p => p.tipo))].sort();
+const publicationYears = [...new Set(publications.map(p => p.ano))].sort((a, b) => b.localeCompare(a));
+---
+
+<section class="related-publications">
+  <h3>Publicações Relacionadas ({publications.length})</h3>
+  
+  {publications.length === 0 ? (
+    <p class="empty-state">Nenhuma publicação associada a esta linha de pesquisa.</p>
+  ) : (
+    <>
+      <div class="filters">
+        <div class="filter-group">
+          <label for="filter-pub-type">Tipo:</label>
+          <select id="filter-pub-type" class="filter-select" data-filter="tipo">
+            <option value="">Todos</option>
+            {publicationTypes.map(type => (
+              <option value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="filter-pub-year">Ano:</label>
+          <select id="filter-pub-year" class="filter-select" data-filter="ano">
+            <option value="">Todos</option>
+            {publicationYears.map(year => (
+              <option value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table class="publications-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="titulo">
+                Título
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="tipo">
+                Tipo
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="ano">
+                Ano
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th>Autores</th>
+              <th>Pesquisador</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedPublications.map(pub => (
+              <tr 
+                data-tipo={pub.tipo}
+                data-ano={pub.ano}
+                data-titulo={pub.titulo}
+              >
+                <td class="publication-title">{pub.titulo}</td>
+                <td>
+                  <span class="badge badge-publication">
+                    {pub.tipo}
+                  </span>
+                </td>
+                <td class="year">{pub.ano}</td>
+                <td class="authors">
+                  {pub.autores.length > 3 
+                    ? `${pub.autores.slice(0, 3).join(', ')} et al.`
+                    : pub.autores.join(', ')
+                  }
+                </td>
+                <td>
+                  <a href={`/person/${pub.personId}`} class="person-link">
+                    {pub.personName}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <p class="result-count">
+        Mostrando <span id="pub-visible-count">{publications.length}</span> de {publications.length} publicações
+      </p>
+    </>
+  )}
+</section>
+
+<script>
+  // Filter and sort functionality for publications
+  document.addEventListener('DOMContentLoaded', () => {
+    const table = document.querySelector('.publications-table');
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody?.querySelectorAll('tr') || []);
+    const filters = document.querySelectorAll('.related-publications .filter-select');
+    const sortHeaders = document.querySelectorAll('.related-publications .sortable');
+    const visibleCount = document.getElementById('pub-visible-count');
+    
+    let currentSort = { column: 'ano', direction: 'desc' };
+    
+    // Filter function
+    function applyFilters() {
+      const filterValues: Record<string, string> = {};
+      filters.forEach((select) => {
+        const filterType = (select as HTMLSelectElement).dataset.filter;
+        const value = (select as HTMLSelectElement).value;
+        if (filterType) filterValues[filterType] = value;
+      });
+      
+      let visibleRows = 0;
+      rows.forEach(row => {
+        const el = row as HTMLElement;
+        let show = true;
+        
+        Object.entries(filterValues).forEach(([key, value]) => {
+          if (value && el.dataset[key] !== value) {
+            show = false;
+          }
+        });
+        
+        el.style.display = show ? '' : 'none';
+        if (show) visibleRows++;
+      });
+      
+      if (visibleCount) {
+        visibleCount.textContent = visibleRows.toString();
+      }
+    }
+    
+    // Sort function
+    function sortTable(column: string) {
+      const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+      currentSort = { column, direction };
+      
+      const sortedRows = rows.sort((a, b) => {
+        const aEl = a as HTMLElement;
+        const bEl = b as HTMLElement;
+        const aValue = aEl.dataset[column] || '';
+        const bValue = bEl.dataset[column] || '';
+        
+        const comparison = aValue.localeCompare(bValue, 'pt-BR');
+        return direction === 'asc' ? comparison : -comparison;
+      });
+      
+      sortedRows.forEach(row => tbody?.appendChild(row));
+      
+      // Update sort icons
+      sortHeaders.forEach(header => {
+        const icon = header.querySelector('.sort-icon');
+        if (icon) {
+          if ((header as HTMLElement).dataset.sort === column) {
+            icon.textContent = direction === 'asc' ? '↑' : '↓';
+          } else {
+            icon.textContent = '⇅';
+          }
+        }
+      });
+    }
+    
+    // Event listeners
+    filters.forEach(select => {
+      select.addEventListener('change', applyFilters);
+    });
+    
+    sortHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const column = (header as HTMLElement).dataset.sort;
+        if (column) sortTable(column);
+      });
+    });
+    
+    // Set initial sort indicator
+    const yearHeader = Array.from(sortHeaders).find(h => (h as HTMLElement).dataset.sort === 'ano');
+    const yearIcon = yearHeader?.querySelector('.sort-icon');
+    if (yearIcon) yearIcon.textContent = '↓';
+  });
+</script>
+
+<style>
+  .related-publications {
+    margin: 2rem 0;
+  }
+
+  .related-publications h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .filter-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  .filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    cursor: pointer;
+  }
+
+  .filter-select:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 0;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  .publications-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+
+  .publications-table th,
+  .publications-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .publications-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .publications-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .publications-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sortable:hover {
+    background: #f3f4f6;
+  }
+
+  .sort-icon {
+    margin-left: 0.25rem;
+    color: #9ca3af;
+  }
+
+  .publication-title {
+    font-weight: 500;
+    color: #1a1a1a;
+    max-width: 400px;
+  }
+
+  .year {
+    font-weight: 600;
+    color: #4b5563;
+  }
+
+  .authors {
+    font-size: 0.85rem;
+    color: #6b7280;
+    max-width: 300px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .badge-publication {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .person-link {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  .person-link:hover {
+    text-decoration: underline;
+  }
+
+  .result-count {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .result-count span {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  @media (max-width: 768px) {
+    .filters {
+      flex-direction: column;
+    }
+
+    .filter-group {
+      width: 100%;
+    }
+
+    .publications-table {
+      font-size: 0.85rem;
+    }
+
+    .publications-table th,
+    .publications-table td {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .publication-title,
+    .authors {
+      max-width: 200px;
+    }
+  }
+</style>

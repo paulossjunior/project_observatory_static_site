@@ -25,34 +25,139 @@ const sortedPeople = people.sort((a, b) =>
     <meta name="description" content="Browse profiles of researchers and academics" />
   </head>
   <body>
+    <nav class="section-nav" id="section-nav">
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu">
+        <span class="nav-toggle-icon">☰</span>
+      </button>
+      <div class="nav-content" id="nav-content">
+        <h3 class="nav-title">Navegação</h3>
+        <ul class="nav-list">
+          <li><a href="#home" class="nav-link active">Início</a></li>
+          <li><a href="#search" class="nav-link">Busca</a></li>
+          <li><a href="#statistics" class="nav-link">Estatísticas</a></li>
+          <li><a href="#researchers" class="nav-link">Pesquisadores</a></li>
+        </ul>
+        <div class="nav-divider"></div>
+        <a href="/open-data" class="nav-external-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Dados Abertos</span>
+        </a>
+      </div>
+    </nav>
+
     <main>
-      <header class="page-header">
-        <h1>Academic Observatory</h1>
-        <p class="intro">
-          Explore the profiles of our researchers and academics. Click on any card to view detailed information about their academic background, professional experience, and research projects.
-        </p>
-      </header>
+      <div id="home">
+        <header class="page-header">
+          <h1>Academic Observatory</h1>
+          <p class="intro">
+            Explore the profiles of our researchers and academics. Click on any card to view detailed information about their academic background, professional experience, and research projects.
+          </p>
+          <div class="header-actions">
+            <a href="/open-data" class="btn-open-data">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Dados Abertos (JSON)</span>
+            </a>
+          </div>
+        </header>
+      </div>
 
-      <Search />
+      <div id="search">
+        <Search />
+      </div>
 
-      <GlobalStatsDashboard stats={globalStats} />
+      <div id="statistics">
+        <GlobalStatsDashboard stats={globalStats} />
+      </div>
 
-      <h2 class="section-heading">All Researchers</h2>
-      
-      <section class="people-grid">
-        {sortedPeople.map((person) => (
-          <PersonCard
-            name={person.data.informacoes_pessoais.nome_completo}
-            summary={person.data.informacoes_pessoais.texto_resumo}
-            id={person.id}
-          />
-        ))}
-      </section>
+      <div id="researchers">
+        <h2 class="section-heading">All Researchers</h2>
+        
+        <section class="people-grid">
+          {sortedPeople.map((person) => (
+            <PersonCard
+              name={person.data.informacoes_pessoais.nome_completo}
+              summary={person.data.informacoes_pessoais.texto_resumo}
+              id={person.id}
+            />
+          ))}
+        </section>
 
-      {sortedPeople.length === 0 && (
-        <p class="no-results">No people found.</p>
-      )}
+        {sortedPeople.length === 0 && (
+          <p class="no-results">No people found.</p>
+        )}
+      </div>
     </main>
+
+    <script>
+      // Navigation menu functionality
+      document.addEventListener('DOMContentLoaded', () => {
+        const navToggle = document.getElementById('nav-toggle');
+        const navContent = document.getElementById('nav-content');
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        // Toggle mobile menu
+        if (navToggle && navContent) {
+          navToggle.addEventListener('click', () => {
+            navContent.classList.toggle('active');
+            navToggle.classList.toggle('active');
+          });
+        }
+        
+        // Smooth scroll and active link highlighting
+        navLinks.forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+              // Close mobile menu
+              if (navContent) navContent.classList.remove('active');
+              if (navToggle) navToggle.classList.remove('active');
+              
+              // Smooth scroll
+              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              
+              // Update active link
+              navLinks.forEach(l => l.classList.remove('active'));
+              link.classList.add('active');
+            }
+          });
+        });
+        
+        // Highlight active section on scroll
+        const sections = document.querySelectorAll('main > div[id]');
+        const observerOptions = {
+          root: null,
+          rootMargin: '-20% 0px -70% 0px',
+          threshold: 0
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const id = entry.target.getAttribute('id');
+              navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${id}`) {
+                  link.classList.add('active');
+                }
+              });
+            }
+          });
+        }, observerOptions);
+        
+        sections.forEach(section => observer.observe(section));
+      });
+    </script>
   </body>
 </html>
 
@@ -82,10 +187,141 @@ const sortedPeople = people.sort((a, b) =>
     color: var(--color-text);
   }
 
+  p {
+    text-align: justify;
+  }
+
   main {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1.5rem;
+  }
+
+  /* Section Navigation Menu */
+  .section-nav {
+    position: fixed;
+    top: 100px;
+    right: 2rem;
+    width: 220px;
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+  }
+
+  .nav-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 1rem;
+    width: 48px;
+    height: 48px;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 101;
+    transition: all 0.3s ease;
+  }
+
+  .nav-toggle:hover {
+    background: #0052a3;
+    transform: scale(1.05);
+  }
+
+  .nav-toggle.active {
+    background: #0052a3;
+  }
+
+  .nav-toggle-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .nav-content {
+    padding: 1.5rem;
+  }
+
+  .nav-title {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-list li {
+    margin: 0;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 0.625rem 0.75rem;
+    color: var(--color-text-light);
+    text-decoration: none;
+    font-size: 0.875rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-link:hover {
+    background: var(--color-bg-alt);
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+  }
+
+  .nav-link.active {
+    background: #e6f2ff;
+    color: var(--color-primary);
+    font-weight: 600;
+    border-left-color: var(--color-primary);
+  }
+
+  .nav-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 1rem 0;
+  }
+
+  .nav-external-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #10b981;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .nav-external-link:hover {
+    background: #059669;
+    transform: translateY(-1px);
+  }
+
+  .nav-external-link svg {
+    flex-shrink: 0;
+  }
+
+  /* Scroll offset for anchors */
+  main > div[id] {
+    scroll-margin-top: 20px;
   }
 
   .page-header {
@@ -101,11 +337,43 @@ const sortedPeople = people.sort((a, b) =>
   }
 
   .page-header .intro {
-    margin: 0 auto;
+    margin: 0 auto 1.5rem;
     max-width: 700px;
     font-size: 1.1rem;
     color: var(--color-text-light);
     line-height: 1.7;
+  }
+
+  .header-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .btn-open-data {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.5rem;
+    background: #10b981;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  }
+
+  .btn-open-data:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+  }
+
+  .btn-open-data svg {
+    flex-shrink: 0;
   }
 
   .people-grid {
@@ -130,6 +398,53 @@ const sortedPeople = people.sort((a, b) =>
   }
 
   /* Responsive design */
+  @media (max-width: 1200px) {
+    .section-nav {
+      right: 1rem;
+      width: 200px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .section-nav {
+      position: fixed;
+      top: 0;
+      right: -280px;
+      width: 280px;
+      height: 100vh;
+      max-height: 100vh;
+      border-radius: 0;
+      border-right: none;
+      transition: right 0.3s ease;
+    }
+
+    .nav-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-content {
+      padding: 2rem 1.5rem;
+    }
+
+    .section-nav:has(.nav-content.active) {
+      right: 0;
+    }
+
+    /* Overlay when menu is open */
+    body:has(.nav-content.active)::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 99;
+    }
+  }
+
   @media (max-width: 768px) {
     main {
       padding: 1.5rem 1rem;
@@ -147,6 +462,17 @@ const sortedPeople = people.sort((a, b) =>
       grid-template-columns: 1fr;
       gap: 1rem;
     }
+
+    .nav-toggle {
+      top: 15px;
+      right: 0.75rem;
+      width: 44px;
+      height: 44px;
+    }
+
+    .nav-toggle-icon {
+      font-size: 1.25rem;
+    }
   }
 
   @media (max-width: 480px) {
@@ -156,6 +482,15 @@ const sortedPeople = people.sort((a, b) =>
 
     .page-header {
       margin-bottom: 2rem;
+    }
+
+    .section-nav {
+      width: 100%;
+      right: -100%;
+    }
+
+    .nav-toggle {
+      top: 10px;
     }
   }
 </style>

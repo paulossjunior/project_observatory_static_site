@@ -1,0 +1,388 @@
+---
+import type { ProjectReference } from '../utils/researchLineData';
+
+interface Props {
+  projects: ProjectReference[];
+}
+
+const { projects } = Astro.props;
+
+// Get unique values for filters
+const projectTypes = [...new Set(projects.map(p => p.tipo))].sort();
+const projectStatuses = [...new Set(projects.map(p => p.status))].sort();
+const projectYears = [...new Set(projects.map(p => p.ano_inicio))].sort((a, b) => b.localeCompare(a));
+---
+
+<section class="related-projects">
+  <h3>Projetos Relacionados ({projects.length})</h3>
+  
+  {projects.length === 0 ? (
+    <p class="empty-state">Nenhum projeto associado a esta linha de pesquisa.</p>
+  ) : (
+    <>
+      <div class="filters">
+        <div class="filter-group">
+          <label for="filter-type">Tipo:</label>
+          <select id="filter-type" class="filter-select" data-filter="tipo">
+            <option value="">Todos</option>
+            {projectTypes.map(type => (
+              <option value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="filter-status">Status:</label>
+          <select id="filter-status" class="filter-select" data-filter="status">
+            <option value="">Todos</option>
+            {projectStatuses.map(status => (
+              <option value={status}>
+                {status === 'em_andamento' ? 'Em Andamento' : 'Concluído'}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label for="filter-year">Ano:</label>
+          <select id="filter-year" class="filter-select" data-filter="ano_inicio">
+            <option value="">Todos</option>
+            {projectYears.map(year => (
+              <option value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <div class="table-container">
+        <table class="projects-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="nome">
+                Projeto
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="tipo">
+                Tipo
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="status">
+                Status
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="ano_inicio">
+                Ano
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th>Pesquisador</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map(project => (
+              <tr 
+                data-tipo={project.tipo}
+                data-status={project.status}
+                data-ano_inicio={project.ano_inicio}
+                data-nome={project.nome}
+              >
+                <td class="project-name">{project.nome}</td>
+                <td>
+                  <span class={`badge badge-${project.tipo}`}>
+                    {project.tipo.charAt(0).toUpperCase() + project.tipo.slice(1)}
+                  </span>
+                </td>
+                <td>
+                  <span class={`badge badge-${project.status}`}>
+                    {project.status === 'em_andamento' ? '⏳ Em Andamento' : '✓ Concluído'}
+                  </span>
+                </td>
+                <td>{project.ano_inicio}{project.ano_fim ? ` - ${project.ano_fim}` : ''}</td>
+                <td>
+                  <a href={`/person/${project.personId}`} class="person-link">
+                    {project.personName}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <p class="result-count">
+        Mostrando <span id="visible-count">{projects.length}</span> de {projects.length} projetos
+      </p>
+    </>
+  )}
+</section>
+
+<script>
+  // Filter and sort functionality
+  document.addEventListener('DOMContentLoaded', () => {
+    const table = document.querySelector('.projects-table');
+    if (!table) return;
+    
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody?.querySelectorAll('tr') || []);
+    const filters = document.querySelectorAll('.filter-select');
+    const sortHeaders = document.querySelectorAll('.sortable');
+    const visibleCount = document.getElementById('visible-count');
+    
+    let currentSort = { column: '', direction: 'asc' };
+    
+    // Filter function
+    function applyFilters() {
+      const filterValues: Record<string, string> = {};
+      filters.forEach((select) => {
+        const filterType = (select as HTMLSelectElement).dataset.filter;
+        const value = (select as HTMLSelectElement).value;
+        if (filterType) filterValues[filterType] = value;
+      });
+      
+      let visibleRows = 0;
+      rows.forEach(row => {
+        const el = row as HTMLElement;
+        let show = true;
+        
+        Object.entries(filterValues).forEach(([key, value]) => {
+          if (value && el.dataset[key] !== value) {
+            show = false;
+          }
+        });
+        
+        el.style.display = show ? '' : 'none';
+        if (show) visibleRows++;
+      });
+      
+      if (visibleCount) {
+        visibleCount.textContent = visibleRows.toString();
+      }
+    }
+    
+    // Sort function
+    function sortTable(column: string) {
+      const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+      currentSort = { column, direction };
+      
+      const sortedRows = rows.sort((a, b) => {
+        const aEl = a as HTMLElement;
+        const bEl = b as HTMLElement;
+        const aValue = aEl.dataset[column] || '';
+        const bValue = bEl.dataset[column] || '';
+        
+        const comparison = aValue.localeCompare(bValue, 'pt-BR');
+        return direction === 'asc' ? comparison : -comparison;
+      });
+      
+      sortedRows.forEach(row => tbody?.appendChild(row));
+      
+      // Update sort icons
+      sortHeaders.forEach(header => {
+        const icon = header.querySelector('.sort-icon');
+        if (icon) {
+          if ((header as HTMLElement).dataset.sort === column) {
+            icon.textContent = direction === 'asc' ? '↑' : '↓';
+          } else {
+            icon.textContent = '⇅';
+          }
+        }
+      });
+    }
+    
+    // Event listeners
+    filters.forEach(select => {
+      select.addEventListener('change', applyFilters);
+    });
+    
+    sortHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const column = (header as HTMLElement).dataset.sort;
+        if (column) sortTable(column);
+      });
+    });
+  });
+</script>
+
+<style>
+  .related-projects {
+    margin: 2rem 0;
+  }
+
+  .related-projects h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  .empty-state {
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .filter-group label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4b5563;
+  }
+
+  .filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background: white;
+    cursor: pointer;
+  }
+
+  .filter-select:focus {
+    outline: 2px solid #0066cc;
+    outline-offset: 0;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+
+  .projects-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+
+  .projects-table th,
+  .projects-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .projects-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .projects-table tbody tr:hover {
+    background: #f9fafb;
+  }
+
+  .projects-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sortable:hover {
+    background: #f3f4f6;
+  }
+
+  .sort-icon {
+    margin-left: 0.25rem;
+    color: #9ca3af;
+  }
+
+  .project-name {
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  .badge-pesquisa {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  .badge-extensao {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .badge-desenvolvimento {
+    background: #fce7f3;
+    color: #9f1239;
+  }
+
+  .badge-em_andamento {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .badge-concluido {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  .person-link {
+    color: #0066cc;
+    text-decoration: none;
+  }
+
+  .person-link:hover {
+    text-decoration: underline;
+  }
+
+  .result-count {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .result-count span {
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  @media (max-width: 768px) {
+    .filters {
+      flex-direction: column;
+    }
+
+    .filter-group {
+      width: 100%;
+    }
+
+    .projects-table {
+      font-size: 0.85rem;
+    }
+
+    .projects-table th,
+    .projects-table td {
+      padding: 0.5rem 0.75rem;
+    }
+  }
+</style>

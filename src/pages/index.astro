@@ -1,9 +1,11 @@
 ---
 import PersonCard from '../components/PersonCard.astro';
-import ProjectsBarChart from '../components/ProjectsBarChart.astro';
+import GlobalStatsDashboard from '../components/GlobalStatsDashboard.astro';
 import { getAllPeople } from '../utils/personData';
+import { calculateGlobalStats } from '../utils/globalStats';
 
 const people = await getAllPeople();
+const globalStats = await calculateGlobalStats();
 
 // Sort people alphabetically by name
 const sortedPeople = people.sort((a, b) => 
@@ -30,12 +32,10 @@ const sortedPeople = people.sort((a, b) =>
         </p>
       </header>
 
-      <ProjectsBarChart 
-        title="Research, Extension, and Development Projects by Year"
-        height={400}
-        showLegend={true}
-      />
+      <GlobalStatsDashboard stats={globalStats} />
 
+      <h2 class="section-heading">All Researchers</h2>
+      
       <section class="people-grid">
         {sortedPeople.map((person) => (
           <PersonCard
@@ -111,6 +111,14 @@ const sortedPeople = people.sort((a, b) =>
     gap: 1.5rem;
   }
 
+  .section-heading {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 3rem 0 2rem 0;
+    text-align: center;
+    color: var(--color-text);
+  }
+  
   .no-results {
     text-align: center;
     font-size: 1.1rem;

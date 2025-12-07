@@ -1,0 +1,407 @@
+---
+import type { GlobalStats } from '../utils/globalStats';
+import GenericChart from './GenericChart.astro';
+import {
+  getGlobalPublicationsByYear,
+  getGlobalPublicationsByType,
+  getGlobalProjectsByYear,
+  getGlobalSupervisionsByType,
+  getGlobalCommitteesByType,
+  getGlobalFundingSources,
+  getResearchersByDegree
+} from '../utils/globalStats';
+
+interface Props {
+  stats: GlobalStats;
+}
+
+const { stats } = Astro.props;
+
+// Fetch chart data
+const publicationsByYear = await getGlobalPublicationsByYear();
+const publicationsByType = await getGlobalPublicationsByType();
+const projectsByYear = await getGlobalProjectsByYear();
+const supervisionsByType = await getGlobalSupervisionsByType();
+const committeesByType = await getGlobalCommitteesByType();
+const fundingSources = await getGlobalFundingSources();
+const researchersByDegree = await getResearchersByDegree();
+
+// Prepare chart data
+const pubTimelineData = {
+  labels: publicationsByYear.map(p => p.year.toString()),
+  datasets: [{
+    label: 'Publications',
+    data: publicationsByYear.map(p => p.count),
+    borderColor: '#3b82f6',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    tension: 0.4,
+    fill: true
+  }]
+};
+
+const pubTypeData = {
+  labels: publicationsByType.map(p => p.type),
+  datasets: [{
+    label: 'Count',
+    data: publicationsByType.map(p => p.count),
+    backgroundColor: [
+      '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6',
+      '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
+    ]
+  }]
+};
+
+const projectsData = {
+  labels: projectsByYear.map(p => p.year.toString()),
+  datasets: [
+    {
+      label: 'Research',
+      data: projectsByYear.map(p => p.research),
+      backgroundColor: '#3b82f6'
+    },
+    {
+      label: 'Extension',
+      data: projectsByYear.map(p => p.extension),
+      backgroundColor: '#10b981'
+    },
+    {
+      label: 'Development',
+      data: projectsByYear.map(p => p.development),
+      backgroundColor: '#f59e0b'
+    }
+  ]
+};
+
+const supervisionsData = {
+  labels: supervisionsByType.map(s => s.type),
+  datasets: [
+    {
+      label: 'Ongoing',
+      data: supervisionsByType.map(s => s.ongoing),
+      backgroundColor: '#3b82f6'
+    },
+    {
+      label: 'Completed',
+      data: supervisionsByType.map(s => s.completed),
+      backgroundColor: '#10b981'
+    }
+  ]
+};
+
+const committeesData = {
+  labels: committeesByType.map(c => c.type),
+  datasets: [{
+    label: 'Count',
+    data: committeesByType.map(c => c.total),
+    backgroundColor: '#8b5cf6'
+  }]
+};
+
+const fundingData = {
+  labels: fundingSources.map(f => f.agency),
+  datasets: [{
+    label: 'Projects',
+    data: fundingSources.map(f => f.projectCount),
+    backgroundColor: '#f59e0b'
+  }]
+};
+
+const degreeData = {
+  labels: researchersByDegree.map(d => d.degree),
+  datasets: [{
+    label: 'Researchers',
+    data: researchersByDegree.map(d => d.count),
+    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+  }]
+};
+---
+
+<div class="global-stats-dashboard">
+  <h2 class="dashboard-title">Global Statistics</h2>
+  
+  <!-- Overview Cards Section -->
+  <div class="overview-cards">
+    <div class="stat-card card-blue">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-value">{stats.totalResearchers}</div>
+        <div class="stat-label">Researchers</div>
+      </div>
+    </div>
+    
+    <div class="stat-card card-green">
+      <div class="stat-icon">📚</div>
+      <div class="stat-content">
+        <div class="stat-value">{stats.totalPublications}</div>
+        <div class="stat-label">Publications</div>
+      </div>
+    </div>
+    
+    <div class="stat-card card-purple">
+      <div class="stat-icon">🔬</div>
+      <div class="stat-content">
+        <div class="stat-value">{stats.totalProjects}</div>
+        <div class="stat-label">Projects</div>
+      </div>
+    </div>
+    
+    <div class="stat-card card-orange">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-content">
+        <div class="stat-value">{stats.activeProjects}</div>
+        <div class="stat-label">Active Projects</div>
+      </div>
+    </div>
+    
+    <div class="stat-card card-pink">
+      <div class="stat-icon">🎓</div>
+      <div class="stat-content">
+        <div class="stat-value">{stats.totalSupervisions}</div>
+        <div class="stat-label">Supervisions</div>
+      </div>
+    </div>
+    
+    <div class="stat-card card-teal">
+      <div class="stat-icon">📅</div>
+      <div class="stat-content">
+        <div class="stat-value">{stats.combinedExperience}</div>
+        <div class="stat-label">Years Combined</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Publications Timeline -->
+  <div class="chart-section full-width">
+    <GenericChart
+      chartId="global-pubs-timeline"
+      chartType="line"
+      title={`Publications Over Time (${stats.totalPublications} total)`}
+      chartData={pubTimelineData}
+      height={300}
+    />
+  </div>
+  
+  <!-- Two Column Charts -->
+  <div class="charts-grid">
+    <div class="chart-section">
+      <GenericChart
+        chartId="global-pubs-type"
+        chartType="bar"
+        title="Publications by Type"
+        chartData={pubTypeData}
+        height={350}
+        chartOptions={{ indexAxis: 'y' }}
+      />
+    </div>
+    
+    <div class="chart-section">
+      <GenericChart
+        chartId="global-projects"
+        chartType="bar"
+        title="Projects by Year and Type"
+        chartData={projectsData}
+        height={350}
+        chartOptions={{ 
+          scales: { x: { stacked: true }, y: { stacked: true } }
+        }}
+      />
+    </div>
+  </div>
+  
+  <div class="charts-grid">
+    <div class="chart-section">
+      <GenericChart
+        chartId="global-supervisions"
+        chartType="bar"
+        title="Student Supervisions"
+        chartData={supervisionsData}
+        height={350}
+        chartOptions={{ 
+          scales: { x: { stacked: true }, y: { stacked: true } }
+        }}
+      />
+    </div>
+    
+    <div class="chart-section">
+      <GenericChart
+        chartId="global-committees"
+        chartType="bar"
+        title="Committee Participations"
+        chartData={committeesData}
+        height={350}
+      />
+    </div>
+  </div>
+  
+  <div class="charts-grid">
+    <div class="chart-section">
+      <GenericChart
+        chartId="global-degrees"
+        chartType="doughnut"
+        title="Researchers by Degree"
+        chartData={degreeData}
+        height={350}
+      />
+    </div>
+    
+    <div class="chart-section">
+      <GenericChart
+        chartId="global-funding"
+        chartType="bar"
+        title="Top Funding Sources"
+        chartData={fundingData}
+        height={350}
+        chartOptions={{ indexAxis: 'y' }}
+      />
+    </div>
+  </div>
+</div>
+
+<style>
+  .global-stats-dashboard {
+    margin: 2rem 0;
+    padding: 0 1rem;
+  }
+  
+  .dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #1f2937;
+  }
+  
+  .overview-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, var(--card-color-1) 0%, var(--card-color-2) 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: white;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .stat-icon {
+    font-size: 3rem;
+    line-height: 1;
+  }
+  
+  .stat-content {
+    flex: 1;
+  }
+  
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    font-size: 1rem;
+    opacity: 0.95;
+    font-weight: 500;
+  }
+  
+  /* Card color schemes */
+  .card-blue {
+    --card-color-1: #3b82f6;
+    --card-color-2: #2563eb;
+  }
+  
+  .card-green {
+    --card-color-1: #10b981;
+    --card-color-2: #059669;
+  }
+  
+  .card-purple {
+    --card-color-1: #8b5cf6;
+    --card-color-2: #7c3aed;
+  }
+  
+  .card-orange {
+    --card-color-1: #f59e0b;
+    --card-color-2: #d97706;
+  }
+  
+  .card-pink {
+    --card-color-1: #ec4899;
+    --card-color-2: #db2777;
+  }
+  
+  .card-teal {
+    --card-color-1: #14b8a6;
+    --card-color-2: #0d9488;
+  }
+  
+  /* Chart sections */
+  .chart-section {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chart-section.full-width {
+    margin-bottom: 2rem;
+  }
+  
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 1024px) {
+    .overview-cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .overview-cards {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .stat-card {
+      padding: 1.5rem;
+    }
+    
+    .stat-icon {
+      font-size: 2.5rem;
+    }
+    
+    .stat-value {
+      font-size: 2rem;
+    }
+    
+    .dashboard-title {
+      font-size: 1.5rem;
+    }
+    
+    .chart-section {
+      padding: 1rem;
+    }
+  }
+</style>

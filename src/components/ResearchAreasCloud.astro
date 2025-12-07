@@ -1,0 +1,116 @@
+---
+import type { AreaFrequency } from '../utils/globalStats';
+
+interface Props {
+  areas: AreaFrequency[];
+}
+
+const { areas } = Astro.props;
+
+// Calculate font sizes based on frequency
+const maxCount = Math.max(...areas.map(a => a.count));
+const minCount = Math.min(...areas.map(a => a.count));
+
+const getFontSize = (count: number) => {
+  if (maxCount === minCount) return 1.25;
+  const normalized = (count - minCount) / (maxCount - minCount);
+  return 0.875 + (normalized * 1.5); // Range from 0.875rem to 2.375rem
+};
+
+const getColor = (count: number) => {
+  if (maxCount === minCount) return '#3b82f6';
+  const normalized = (count - minCount) / (maxCount - minCount);
+  
+  if (normalized > 0.66) return '#3b82f6'; // Blue for high frequency
+  if (normalized > 0.33) return '#10b981'; // Green for medium
+  return '#8b5cf6'; // Purple for low
+};
+---
+
+<div class="research-areas-section">
+  <h3 class="section-title">Research Areas</h3>
+  
+  <div class="areas-cloud">
+    {areas.map(area => (
+      <div 
+        class="area-tag"
+        style={`font-size: ${getFontSize(area.count)}rem; color: ${getColor(area.count)};`}
+        title={`${area.count} researcher${area.count > 1 ? 's' : ''}: ${area.researchers.join(', ')}`}
+      >
+        {area.area}
+        <span class="area-count">({area.count})</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .research-areas-section {
+    margin: 3rem 0;
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #1f2937;
+  }
+  
+  .areas-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+  }
+  
+  .area-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 2rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    cursor: default;
+    line-height: 1.2;
+  }
+  
+  .area-tag:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .area-count {
+    font-size: 0.75em;
+    opacity: 0.7;
+    font-weight: 500;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 640px) {
+    .research-areas-section {
+      padding: 1.5rem;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+    }
+    
+    .areas-cloud {
+      gap: 0.75rem;
+      padding: 0.5rem;
+    }
+    
+    .area-tag {
+      padding: 0.375rem 0.75rem;
+    }
+  }
+</style>

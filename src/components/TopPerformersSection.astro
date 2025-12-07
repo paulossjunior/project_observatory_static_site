@@ -1,0 +1,232 @@
+---
+import type { ResearcherRanking } from '../utils/globalStats';
+
+interface Props {
+  publishers: ResearcherRanking[];
+  supervisors: ResearcherRanking[];
+  collaborators: ResearcherRanking[];
+  funded: ResearcherRanking[];
+}
+
+const { publishers, supervisors, collaborators, funded } = Astro.props;
+---
+
+<div class="top-performers-section">
+  <h3 class="section-title">Top Performers</h3>
+  
+  <div class="performers-grid">
+    <!-- Most Prolific Publishers -->
+    <div class="performer-category">
+      <div class="category-header">
+        <span class="category-icon">📚</span>
+        <h4 class="category-title">Most Prolific Publishers</h4>
+      </div>
+      <div class="performer-list">
+        {publishers.map((researcher, index) => (
+          <a href={`/person/${researcher.id}`} class="performer-item">
+            <span class="rank">{index + 1}</span>
+            <div class="performer-info">
+              <div class="performer-name">{researcher.name}</div>
+              <div class="performer-count">{researcher.count} publications</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+    
+    <!-- Most Active Supervisors -->
+    <div class="performer-category">
+      <div class="category-header">
+        <span class="category-icon">🎓</span>
+        <h4 class="category-title">Most Active Supervisors</h4>
+      </div>
+      <div class="performer-list">
+        {supervisors.map((researcher, index) => (
+          <a href={`/person/${researcher.id}`} class="performer-item">
+            <span class="rank">{index + 1}</span>
+            <div class="performer-info">
+              <div class="performer-name">{researcher.name}</div>
+              <div class="performer-count">{researcher.count} supervisions</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+    
+    <!-- Most Collaborative -->
+    <div class="performer-category">
+      <div class="category-header">
+        <span class="category-icon">🤝</span>
+        <h4 class="category-title">Most Collaborative</h4>
+      </div>
+      <div class="performer-list">
+        {collaborators.map((researcher, index) => (
+          <a href={`/person/${researcher.id}`} class="performer-item">
+            <span class="rank">{index + 1}</span>
+            <div class="performer-info">
+              <div class="performer-name">{researcher.name}</div>
+              <div class="performer-count">{researcher.count} collaborators</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+    
+    <!-- Most Funded -->
+    <div class="performer-category">
+      <div class="category-header">
+        <span class="category-icon">💰</span>
+        <h4 class="category-title">Most Funded</h4>
+      </div>
+      <div class="performer-list">
+        {funded.map((researcher, index) => (
+          <a href={`/person/${researcher.id}`} class="performer-item">
+            <span class="rank">{index + 1}</span>
+            <div class="performer-info">
+              <div class="performer-name">{researcher.name}</div>
+              <div class="performer-count">{researcher.count} funded projects</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .top-performers-section {
+    margin: 3rem 0;
+  }
+  
+  .section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #1f2937;
+  }
+  
+  .performers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .performer-category {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  
+  .category-icon {
+    font-size: 1.75rem;
+  }
+  
+  .category-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  .performer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .performer-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: #f9fafb;
+    transition: all 0.2s;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .performer-item:hover {
+    background: #f3f4f6;
+    transform: translateX(4px);
+  }
+  
+  .rank {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+  
+  .performer-info {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .performer-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 0.875rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .performer-count {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  /* Medal colors for top 3 */
+  .performer-item:nth-child(1) .rank {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  }
+  
+  .performer-item:nth-child(2) .rank {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+  }
+  
+  .performer-item:nth-child(3) .rank {
+    background: linear-gradient(135deg, #d97706, #b45309);
+  }
+  
+  /* Responsive design */
+  @media (max-width: 1024px) {
+    .performers-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .performers-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .performer-category {
+      padding: 1rem;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+    }
+  }
+</style>

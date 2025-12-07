@@ -5,13 +5,11 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "prebuild": "node scripts/generate-search-index.js",
     "build": "astro build",
     "preview": "astro preview"
   },
   "dependencies": {
-    "astro": "^4.0.0",
-    "fuse.js": "^7.1.0"
+    "astro": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^24.10.1"

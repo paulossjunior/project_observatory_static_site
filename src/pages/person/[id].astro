@@ -2,6 +2,7 @@
 import PersonHeader from '../../components/PersonHeader.astro';
 import ResearcherAnalyticsDashboard from '../../components/ResearcherAnalyticsDashboard.astro';
 import PersonProjectsChart from '../../components/PersonProjectsChart.astro';
+import CollaborationGraph from '../../components/CollaborationGraph.astro';
 import AcademicSection from '../../components/AcademicSection.astro';
 import AreasAtuacaoSection from '../../components/AreasAtuacaoSection.astro';
 import LinhasPesquisaSection from '../../components/LinhasPesquisaSection.astro';
@@ -45,6 +46,8 @@ if (!person) {
       <PersonHeader info={person.informacoes_pessoais} />
       
       <ResearcherAnalyticsDashboard personData={person} />
+      
+      <CollaborationGraph personData={person} />
       
       <AcademicSection degrees={person.formacao_academica || []} />
       

@@ -1,0 +1,441 @@
+---
+import type { PersonData } from '../utils/personData';
+
+interface Props {
+  personData: PersonData;
+}
+
+const { personData } = Astro.props;
+
+// Coletar colaboradores de projetos e publicações
+const collaboratorsMap = new Map<string, { 
+  projectCount: number; 
+  publicationCount: number;
+  totalCount: number;
+  roles: Set<string>;
+  sources: Set<string>;
+}>();
+const researcherName = personData.informacoes_pessoais.nome_completo;
+
+// 1. Colaboradores de PROJETOS
+const allProjects = [
+  ...(personData.projetos_pesquisa || []),
+  ...(personData.projetos_extensao || []),
+  ...(personData.projetos_desenvolvimento || [])
+];
+
+allProjects.forEach(project => {
+  project.integrantes?.forEach(integrante => {
+    if (integrante.nome !== researcherName) {
+      const existing = collaboratorsMap.get(integrante.nome) || { 
+        projectCount: 0, 
+        publicationCount: 0,
+        totalCount: 0,
+        roles: new Set(), 
+        sources: new Set() 
+      };
+      existing.projectCount++;
+      existing.totalCount++;
+      existing.roles.add(integrante.papel);
+      existing.sources.add('Projetos');
+      collaboratorsMap.set(integrante.nome, existing);
+    }
+  });
+});
+
+// 2. Colaboradores de PUBLICAÇÕES
+const pb = personData.producao_bibliografica;
+
+// Função auxiliar para extrair nomes de autores
+const extractAuthors = (authorString: string): string[] => {
+  if (!authorString) return [];
+  
+  // Separar por ponto e vírgula ou vírgula
+  return authorString
+    .split(/[;,]/)
+    .map(name => name.trim())
+    .filter(name => name.length > 0 && name !== researcherName);
+};
+
+// Processar todos os tipos de publicações
+const allPublications = [
+  ...(pb?.artigos_periodicos || []),
+  ...(pb?.trabalhos_completos_congressos || []),
+  ...(pb?.livros_publicados || []),
+  ...(pb?.capitulos_livros || []),
+  ...(pb?.resumos_expandidos || []),
+  ...(pb?.resumos_congressos || []),
+  ...(pb?.artigos_aceitos || []),
+  ...(pb?.apresentacoes_trabalhos || []),
+  ...(pb?.textos_jornais || []),
+  ...(pb?.outras_producoes || [])
+];
+
+allPublications.forEach((pub: any) => {
+  if (pub.autores) {
+    const authors = extractAuthors(pub.autores);
+    authors.forEach(author => {
+      if (author !== researcherName) {
+        const existing = collaboratorsMap.get(author) || { 
+          projectCount: 0, 
+          publicationCount: 0,
+          totalCount: 0,
+          roles: new Set(), 
+          sources: new Set() 
+        };
+        existing.publicationCount++;
+        existing.totalCount++;
+        existing.roles.add('Coautor');
+        existing.sources.add('Publicações');
+        collaboratorsMap.set(author, existing);
+      }
+    });
+  }
+});
+
+// Ordenar colaboradores por número total de colaborações e pegar top 10
+const topCollaborators = Array.from(collaboratorsMap.entries())
+  .sort((a, b) => b[1].totalCount - a[1].totalCount)
+  .slice(0, 10);
+
+const totalCollaborators = collaboratorsMap.size;
+const totalProjects = allProjects.length;
+const totalPublications = allPublications.length;
+
+// Preparar dados para o grafo (apenas top 10)
+const nodes = [
+  {
+    id: 'researcher',
+    label: researcherName,
+    size: 30,
+    color: '#3b82f6',
+    isCenter: true
+  },
+  ...topCollaborators.map(([name, data]) => ({
+    id: name,
+    label: name,
+    size: Math.min(12 + data.totalCount * 1.5, 28),
+    color: data.publicationCount > data.projectCount ? '#8b5cf6' : '#10b981',
+    projectCount: data.projectCount,
+    publicationCount: data.publicationCount,
+    totalCount: data.totalCount,
+    roles: Array.from(data.roles).join(', '),
+    sources: Array.from(data.sources).join(', ')
+  }))
+];
+
+const edges = topCollaborators.map(([name, data]) => ({
+  source: 'researcher',
+  target: name,
+  value: data.totalCount,
+  projectCount: data.projectCount,
+  publicationCount: data.publicationCount,
+  label: `${data.totalCount} colaboraç${data.totalCount > 1 ? 'ões' : 'ão'}`
+}));
+
+const graphData = { nodes, edges };
+const hasCollaborators = collaboratorsMap.size > 0;
+---
+
+<div class="collaboration-graph-container">
+  <h3 class="graph-title">Rede de Colaboração - Top 10</h3>
+  
+  {hasCollaborators ? (
+    <>
+      <div class="graph-stats">
+        <span class="stat-item">
+          <strong>{totalCollaborators}</strong> colaborador{totalCollaborators !== 1 ? 'es' : ''} total
+        </span>
+        <span class="stat-item">
+          <strong>{topCollaborators.length}</strong> top exibidos
+        </span>
+        <span class="stat-item">
+          <strong>{totalProjects}</strong> projeto{totalProjects !== 1 ? 's' : ''}
+        </span>
+        <span class="stat-item">
+          <strong>{totalPublications}</strong> publicaç{totalPublications !== 1 ? 'ões' : 'ão'}
+        </span>
+      </div>
+      
+      <div id="collaboration-graph" class="graph-canvas"></div>
+      
+      <div class="graph-legend">
+        <div class="legend-item">
+          <span class="legend-dot center"></span>
+          <span>Pesquisador</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot collaborator-project"></span>
+          <span>Mais projetos</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot collaborator-publication"></span>
+          <span>Mais publicações</span>
+        </div>
+        <div class="legend-note">
+          * Tamanho dos nós e espessura das linhas representam o número de colaborações
+        </div>
+      </div>
+    </>
+  ) : (
+    <div class="no-data">
+      <p>Nenhum colaborador encontrado nos projetos.</p>
+    </div>
+  )}
+</div>
+
+{hasCollaborators && (
+  <script define:vars={{ graphData }}>
+    // Renderizar grafo usando D3.js force simulation
+    function renderGraph() {
+      const container = document.getElementById('collaboration-graph');
+      if (!container) return;
+      
+      const width = container.clientWidth;
+      const height = 500;
+      
+      // Criar SVG
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      container.appendChild(svg);
+      
+      // Calcular posições usando força simples
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = Math.min(width, height) * 0.35;
+      
+      const nodes = graphData.nodes.map((node, i) => {
+        if (node.isCenter) {
+          return { ...node, x: centerX, y: centerY };
+        }
+        const angle = (2 * Math.PI * (i - 1)) / (graphData.nodes.length - 1);
+        return {
+          ...node,
+          x: centerX + radius * Math.cos(angle),
+          y: centerY + radius * Math.sin(angle)
+        };
+      });
+      
+      // Desenhar arestas
+      const edgesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      edgesGroup.setAttribute('class', 'edges');
+      svg.appendChild(edgesGroup);
+      
+      graphData.edges.forEach(edge => {
+        const source = nodes.find(n => n.id === edge.source);
+        const target = nodes.find(n => n.id === edge.target);
+        
+        if (source && target) {
+          // Calcular espessura baseada no peso (número de colaborações)
+          const strokeWidth = Math.min(2 + edge.value * 0.8, 10);
+          
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', source.x);
+          line.setAttribute('y1', source.y);
+          line.setAttribute('x2', target.x);
+          line.setAttribute('y2', target.y);
+          line.setAttribute('stroke', '#94a3b8');
+          line.setAttribute('stroke-width', strokeWidth);
+          line.setAttribute('opacity', '0.5');
+          
+          // Tooltip para a linha
+          const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          title.textContent = `${edge.label}\n${edge.projectCount} projeto(s)\n${edge.publicationCount} publicação(ões)`;
+          line.appendChild(title);
+          
+          edgesGroup.appendChild(line);
+        }
+      });
+      
+      // Desenhar nós
+      const nodesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      nodesGroup.setAttribute('class', 'nodes');
+      svg.appendChild(nodesGroup);
+      
+      nodes.forEach(node => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'node');
+        g.setAttribute('transform', `translate(${node.x},${node.y})`);
+        
+        // Círculo do nó
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('r', node.size);
+        circle.setAttribute('fill', node.color);
+        circle.setAttribute('stroke', 'white');
+        circle.setAttribute('stroke-width', '3');
+        circle.style.cursor = 'pointer';
+        
+        // Tooltip
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        if (node.isCenter) {
+          title.textContent = node.label;
+        } else {
+          const details = [
+            node.label,
+            `Total: ${node.totalCount} colaboraç${node.totalCount > 1 ? 'ões' : 'ão'}`,
+            `Projetos: ${node.projectCount}`,
+            `Publicações: ${node.publicationCount}`,
+            `Papéis: ${node.roles}`,
+            `Fontes: ${node.sources}`
+          ];
+          title.textContent = details.join('\n');
+        }
+        circle.appendChild(title);
+        
+        g.appendChild(circle);
+        
+        // Label (apenas para nós maiores ou centro)
+        if (node.isCenter || node.size > 15) {
+          const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          text.setAttribute('text-anchor', 'middle');
+          text.setAttribute('dy', node.size + 15);
+          text.setAttribute('font-size', '12');
+          text.setAttribute('font-weight', node.isCenter ? 'bold' : 'normal');
+          text.setAttribute('fill', '#1f2937');
+          
+          // Truncar nome longo
+          const maxLength = 20;
+          const displayName = node.label.length > maxLength 
+            ? node.label.substring(0, maxLength) + '...' 
+            : node.label;
+          text.textContent = displayName;
+          
+          g.appendChild(text);
+        }
+        
+        nodesGroup.appendChild(g);
+      });
+    }
+    
+    // Renderizar quando o DOM estiver pronto
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderGraph);
+    } else {
+      renderGraph();
+    }
+  </script>
+)}
+
+<style>
+  .collaboration-graph-container {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 2rem 0;
+  }
+  
+  .graph-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+  
+  .graph-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+  }
+  
+  .stat-item {
+    font-size: 0.95rem;
+    color: #4b5563;
+  }
+  
+  .stat-item strong {
+    color: #1f2937;
+    font-size: 1.25rem;
+    margin-right: 0.25rem;
+  }
+  
+  .graph-canvas {
+    width: 100%;
+    min-height: 500px;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    background: #fafafa;
+    overflow: hidden;
+  }
+  
+  .graph-legend {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #4b5563;
+  }
+  
+  .legend-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  
+  .legend-dot.center {
+    background: #3b82f6;
+  }
+  
+  .legend-dot.collaborator-project {
+    background: #10b981;
+  }
+  
+  .legend-dot.collaborator-publication {
+    background: #8b5cf6;
+  }
+  
+  .legend-note {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-style: italic;
+    margin-left: auto;
+  }
+  
+  .no-data {
+    padding: 3rem;
+    text-align: center;
+    color: #6b7280;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .collaboration-graph-container {
+      padding: 1.5rem;
+    }
+    
+    .graph-title {
+      font-size: 1.25rem;
+    }
+    
+    .graph-stats {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .graph-canvas {
+      min-height: 400px;
+    }
+    
+    .legend-note {
+      margin-left: 0;
+      width: 100%;
+    }
+  }
+</style>
